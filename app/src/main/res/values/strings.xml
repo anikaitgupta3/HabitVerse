@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">HabitVerse</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string-array name="frequency_values">
+        <item>Daily</item>
+        <item>3 times a week</item>
+        <item>Everyday</item>
+    </string-array>
+</resources>
