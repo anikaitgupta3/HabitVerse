@@ -4,9 +4,9 @@ import com.example.habitverse.data.Habit
 import kotlinx.coroutines.flow.Flow
 
 interface HabitRepository {
-    suspend fun insertHabit(habit: Habit)
-    suspend fun deleteHabit(habit: Habit)
-    suspend fun editHabit(habit: Habit)
-    fun getAllHabits(): Flow<List<Habit>>
-    fun getHabitsById(id: Int): Flow<Habit>
+    suspend fun insertHabit(habitDomainModel: HabitDomainModel)
+    suspend fun deleteHabit(habitDomainModel: HabitDomainModel)
+    suspend fun editHabit(habitDomainModel: HabitDomainModel)
+    fun getAllHabits(): Flow<List<HabitDomainModel>>
+    fun getHabitsById(id: Int): Flow<HabitDomainModel>
 }

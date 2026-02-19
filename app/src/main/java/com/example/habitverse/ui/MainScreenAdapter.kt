@@ -10,17 +10,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.habitverse.R
 import com.example.habitverse.data.Habit
 import com.example.habitverse.databinding.ListItemBinding
+import com.example.habitverse.domain.HabitDomainModel
 
-class MainScreenAdapter(/*habits: List<Habit>,*/private val onHabitClick: (Habit) -> Unit): ListAdapter<Habit,HabitViewHolder> (
-    object : DiffUtil.ItemCallback<Habit>() {
+class MainScreenAdapter(/*habits: List<Habit>,*/private val onHabitClick: (HabitDomainModel) -> Unit): ListAdapter<HabitDomainModel,HabitViewHolder> (
+    object : DiffUtil.ItemCallback<HabitDomainModel>() {
         override fun areItemsTheSame(
-            oldItem: Habit,
-            newItem: Habit
+            oldItem: HabitDomainModel,
+            newItem: HabitDomainModel
         ): Boolean {
             return oldItem.id == newItem.id
         }
 
-        override fun areContentsTheSame(oldItem: Habit, newItem: Habit): Boolean =
+        override fun areContentsTheSame(oldItem: HabitDomainModel, newItem: HabitDomainModel): Boolean =
             oldItem == newItem
     }) {
     override fun onCreateViewHolder(
@@ -45,10 +46,10 @@ class MainScreenAdapter(/*habits: List<Habit>,*/private val onHabitClick: (Habit
 
 class HabitViewHolder(
     private val binding: ListItemBinding,
-    private val onHabitClick: (Habit) -> Unit
+    private val onHabitClick: (HabitDomainModel) -> Unit
 ) : RecyclerView.ViewHolder(binding.root) {
 
-    fun bind(habit: Habit) {
+    fun bind(habit: HabitDomainModel) {
         binding.tv1.text = habit.habitName
         binding.tv3.text = habit.habitFrequency.frequency
 

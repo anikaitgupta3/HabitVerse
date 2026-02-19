@@ -21,6 +21,7 @@ import com.example.habitverse.data.Frequency
 import com.example.habitverse.data.Habit
 import com.example.habitverse.databinding.FragmentEditHabitBinding
 import com.example.habitverse.databinding.FragmentMainScreenBinding
+import com.example.habitverse.domain.HabitDomainModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -112,7 +113,7 @@ class EditHabitFragment : Fragment() {
                             navController,
                             binding.et1.text.toString(),
                             habitViewModel.selectedFrequency.first()!!,
-                            uiState.currentEditHabit!!.id
+                            uiState.currentEditHabit!!.id!!
                         )
                     } else {
                         Toast.makeText(
@@ -151,11 +152,11 @@ class EditHabitFragment : Fragment() {
         navController.navigateUp()
     }
     fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,id:Int){
-        habitViewModel.updateHabit(Habit(id = id, habitName = habitName, habitFrequency = habitFrequency))
+        habitViewModel.updateHabit(HabitDomainModel(id = id, habitName = habitName, habitFrequency = habitFrequency))
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
-    fun clickDeleteButton(navController: NavController,habit: Habit){
+    fun clickDeleteButton(navController: NavController,habit: HabitDomainModel){
         habitViewModel.deleteHabit(habit)
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()

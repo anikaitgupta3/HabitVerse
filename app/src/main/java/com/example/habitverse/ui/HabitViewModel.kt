@@ -9,7 +9,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.habitverse.HabitVerseApp
 import com.example.habitverse.data.Frequency
 import com.example.habitverse.data.Habit
+import com.example.habitverse.domain.HabitDomainModel
 import com.example.habitverse.domain.HabitRepository
+import com.example.habitverse.domain.HabitUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,8 +24,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class HabitUiState(
-    val listOfHabits:List<Habit> = listOf(),
-    val currentEditHabit: Habit? = null
+    val listOfHabits:List<HabitDomainModel> = listOf(),
+    val currentEditHabit: HabitDomainModel? = null
 )
 /*class HabitViewModel(private val habitRepository: HabitRepository) : ViewModel() {
     // TODO: Implement the ViewModel
@@ -70,10 +72,10 @@ data class HabitUiState(
 
 }*/
 class HabitViewModel(
-    private val habitRepository: HabitRepository
+    private val habitUseCase: HabitUseCase
 ) : ViewModel() {
 
-    private val _currentEditHabit = MutableStateFlow<Habit?>(null)
+    private val _currentEditHabit = MutableStateFlow<HabitDomainModel?>(null)
 //    private var currentSelectedFrequencyAddFragment: Frequency? = null
 //    val _currentSelectedFrequencyAddFragment = currentSelectedFrequencyAddFragment
     private val _selectedFrequency = MutableStateFlow<Frequency?>(null)
@@ -81,7 +83,7 @@ class HabitViewModel(
 
     val habitUiState: StateFlow<HabitUiState> =
         combine(
-            habitRepository.getAllHabits(),
+            habitUseCase.getAllHabits(),
             _currentEditHabit
         ) { habits, currentEditHabit ->
             HabitUiState(
@@ -94,16 +96,16 @@ class HabitViewModel(
             initialValue = HabitUiState()
         )
 
-    fun addHabit(habit: Habit) = viewModelScope.launch {
-        habitRepository.insertHabit(habit)
+    fun addHabit(habit: HabitDomainModel) = viewModelScope.launch {
+        habitUseCase.insertHabit(habit)
     }
 
-    fun deleteHabit(habit: Habit) = viewModelScope.launch {
-        habitRepository.deleteHabit(habit)
+    fun deleteHabit(habit: HabitDomainModel) = viewModelScope.launch {
+        habitUseCase.deleteHabit(habit)
     }
 
-    fun updateHabit(habit: Habit) = viewModelScope.launch {
-        habitRepository.editHabit(habit)
+    fun updateHabit(habit: HabitDomainModel) = viewModelScope.launch {
+        habitUseCase.editHabit(habit)
     }
     fun updateCurrentFrequencyFragment(frequency: Frequency){
         _selectedFrequency.value = frequency
@@ -112,7 +114,7 @@ class HabitViewModel(
         _selectedFrequency.value = null
     }
 
-    fun updateCurrentEditHabit(habit: Habit?) {
+    fun updateCurrentEditHabit(habit: HabitDomainModel?) {
         _currentEditHabit.value = habit
     }
     /*fun updateCurrentEditHabitById(id:Int){
@@ -125,8 +127,9 @@ class HabitViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[APPLICATION_KEY] as HabitVerseApp)
-                val habitRepository = application.container.habitRepository
-                HabitViewModel(habitRepository = habitRepository)
+                //val habitRepository = application.container.habitRepository
+                val habitUseCase = application.container.habitUseCase
+                HabitViewModel(habitUseCase=habitUseCase)
             }
         }
     }

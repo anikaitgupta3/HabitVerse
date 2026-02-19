@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.habitverse.R
 import com.example.habitverse.data.Habit
 import com.example.habitverse.databinding.FragmentMainScreenBinding
+import com.example.habitverse.domain.HabitDomainModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.getValue
@@ -96,7 +97,7 @@ class MainScreenFragment : Fragment() {
             findNavController().navigate(R.id.addHabitFragment)
         }
     }
-    fun onItemClick(habit: Habit){
+    fun onItemClick(habit: HabitDomainModel){
         habitViewModel.updateCurrentEditHabit(habit)
         findNavController().navigate(R.id.editHabitFragment)
         //val bundle = bundleOf("Key" to habit.id)

@@ -22,6 +22,7 @@ import com.example.habitverse.data.Frequency
 import com.example.habitverse.data.Habit
 import com.example.habitverse.databinding.FragmentAddHabitBinding
 import com.example.habitverse.databinding.FragmentMainScreenBinding
+import com.example.habitverse.domain.HabitDomainModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.getValue
@@ -182,7 +183,7 @@ class AddHabitFragment : Fragment() {
         navController.navigateUp()
     }
     fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency){
-        habitViewModel.addHabit(Habit(habitName = habitName, habitFrequency = habitFrequency))
+        habitViewModel.addHabit(HabitDomainModel(habitName = habitName, habitFrequency = habitFrequency))
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
