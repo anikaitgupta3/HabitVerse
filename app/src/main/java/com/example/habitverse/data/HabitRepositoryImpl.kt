@@ -4,6 +4,7 @@ import com.example.habitverse.domain.HabitDomainModel
 import com.example.habitverse.domain.HabitRepository
 import com.example.habitverse.toDomain
 import com.example.habitverse.toEntity
+import com.example.habitverse.toEntityInCaseOfDeleted
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -15,7 +16,8 @@ class HabitRepositoryImpl(private val habitDao: HabitDao): HabitRepository {
 
     override suspend fun deleteHabit(habitDomainModel: HabitDomainModel) {
         //TODO("Not yet implemented")
-        habitDao.deleteHabit(habitDomainModel.toEntity())
+        //habitDao.deleteHabit(habitDomainModel.toEntity())
+        habitDao.editHabit(habitDomainModel.toEntityInCaseOfDeleted())
     }
 
     override suspend fun editHabit(habitDomainModel: HabitDomainModel) {

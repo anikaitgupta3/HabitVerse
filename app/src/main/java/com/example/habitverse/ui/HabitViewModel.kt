@@ -9,9 +9,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.habitverse.HabitVerseApp
 import com.example.habitverse.data.Frequency
 import com.example.habitverse.data.Habit
+import com.example.habitverse.data.SyncManager
 import com.example.habitverse.domain.HabitDomainModel
 import com.example.habitverse.domain.HabitRepository
 import com.example.habitverse.domain.HabitUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -72,7 +74,7 @@ data class HabitUiState(
 
 }*/
 class HabitViewModel(
-    private val habitUseCase: HabitUseCase
+    private val habitUseCase: HabitUseCase,private val syncManager: SyncManager
 ) : ViewModel() {
 
     private val _currentEditHabit = MutableStateFlow<HabitDomainModel?>(null)
@@ -80,6 +82,11 @@ class HabitViewModel(
 //    val _currentSelectedFrequencyAddFragment = currentSelectedFrequencyAddFragment
     private val _selectedFrequency = MutableStateFlow<Frequency?>(null)
     val selectedFrequency: StateFlow<Frequency?> = _selectedFrequency.asStateFlow()
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            syncManager.sync()
+        }
+    }
 
     val habitUiState: StateFlow<HabitUiState> =
         combine(
@@ -129,7 +136,8 @@ class HabitViewModel(
                 val application = (this[APPLICATION_KEY] as HabitVerseApp)
                 //val habitRepository = application.container.habitRepository
                 val habitUseCase = application.container.habitUseCase
-                HabitViewModel(habitUseCase=habitUseCase)
+                val syncManager = application.container.syncManager
+                HabitViewModel(habitUseCase=habitUseCase,syncManager=syncManager)
             }
         }
     }

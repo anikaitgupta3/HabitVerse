@@ -8,5 +8,9 @@ data class Habit(
     @PrimaryKey(autoGenerate = true)
     val id:Int=0,
     val habitName: String,
-    val habitFrequency: Frequency
+    val habitFrequency: Frequency,
+    val syncState: SyncState,
+    val isDeleted: Boolean,
+    val remoteId: String?
+
 )

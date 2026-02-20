@@ -18,9 +18,12 @@ interface HabitDao {
     @Update
     suspend fun editHabit(habit: Habit)
 
-    @Query("select* from habits")
+    @Query("select* from habits where isDeleted = 0")
     fun getAllHabits(): Flow<List<Habit>>
 
     @Query("select* from habits where id = :id")
     fun getHabitsById(id: Int):Flow<Habit>
+
+    @Query("select* from habits where syncState = 'PENDING'")
+    fun getAllPendingHabits():List<Habit>
 }
