@@ -7,8 +7,9 @@ import com.example.habitverse.toEntity
 import com.example.habitverse.toEntityInCaseOfDeleted
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
-class HabitRepositoryImpl(private val habitDao: HabitDao): HabitRepository {
+class HabitRepositoryImpl @Inject constructor(private val habitDao: HabitDao): HabitRepository {
     override suspend fun insertHabit(habitDomainModel: HabitDomainModel) {
         //TODO("Not yet implemented")
         habitDao.insertHabit(habitDomainModel.toEntity())

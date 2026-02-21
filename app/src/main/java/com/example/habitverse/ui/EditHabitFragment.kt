@@ -22,6 +22,7 @@ import com.example.habitverse.data.Habit
 import com.example.habitverse.databinding.FragmentEditHabitBinding
 import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -35,14 +36,13 @@ import kotlinx.coroutines.launch
  * Use the [EditHabitFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
+@AndroidEntryPoint
 class EditHabitFragment : Fragment() {
     // TODO: Rename and change types of parameters
     //private var param1: String? = null
     //private var param2: String? = null
     lateinit var binding: FragmentEditHabitBinding
-    private val habitViewModel by activityViewModels<HabitViewModel> {
-        HabitViewModel.Factory
-    }
+    private val habitViewModel by activityViewModels<HabitViewModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /*arguments?.let {

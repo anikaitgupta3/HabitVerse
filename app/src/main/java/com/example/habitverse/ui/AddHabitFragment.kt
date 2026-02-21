@@ -23,6 +23,7 @@ import com.example.habitverse.data.Habit
 import com.example.habitverse.databinding.FragmentAddHabitBinding
 import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.getValue
@@ -37,14 +38,13 @@ import kotlin.getValue
  * Use the [AddHabitFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
+@AndroidEntryPoint
 class AddHabitFragment : Fragment() {
     // TODO: Rename and change types of parameters
     //private var param1: String? = null
     //private var param2: String? = null
     lateinit var binding: FragmentAddHabitBinding
-    private val habitViewModel by activityViewModels<HabitViewModel>{
-        HabitViewModel.Factory
-    }
+    private val habitViewModel by activityViewModels<HabitViewModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /*arguments?.let {

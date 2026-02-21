@@ -2,8 +2,9 @@ package com.example.habitverse.domain
 
 import com.example.habitverse.domain.HabitRepository
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class HabitUseCase(private val habitRepository: HabitRepository) {
+class HabitUseCase @Inject constructor(private val habitRepository: HabitRepository) {
     suspend fun insertHabit(habitDomainModel: HabitDomainModel){
         habitRepository.insertHabit(habitDomainModel)
     }

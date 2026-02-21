@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase
 abstract class HabitDatabase : RoomDatabase() {
     abstract fun habitDao(): HabitDao
 
-    companion object {
+    /*companion object {
         @Volatile
         private var Instance: HabitDatabase? = null
 
@@ -22,5 +22,5 @@ abstract class HabitDatabase : RoomDatabase() {
                     .also { Instance = it }
             }
         }
-    }
+    }*/
 }

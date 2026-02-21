@@ -13,6 +13,7 @@ import com.example.habitverse.data.SyncManager
 import com.example.habitverse.domain.HabitDomainModel
 import com.example.habitverse.domain.HabitRepository
 import com.example.habitverse.domain.HabitUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class HabitUiState(
     val listOfHabits:List<HabitDomainModel> = listOf(),
@@ -73,7 +75,8 @@ data class HabitUiState(
     }
 
 }*/
-class HabitViewModel(
+@HiltViewModel
+class HabitViewModel @Inject constructor(
     private val habitUseCase: HabitUseCase,private val syncManager: SyncManager
 ) : ViewModel() {
 
@@ -130,15 +133,4 @@ class HabitViewModel(
             _currentEditHabit.value=habit
         }
     }*/
-    companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = (this[APPLICATION_KEY] as HabitVerseApp)
-                //val habitRepository = application.container.habitRepository
-                val habitUseCase = application.container.habitUseCase
-                val syncManager = application.container.syncManager
-                HabitViewModel(habitUseCase=habitUseCase,syncManager=syncManager)
-            }
-        }
-    }
 }

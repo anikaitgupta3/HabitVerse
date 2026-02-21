@@ -1,6 +1,8 @@
 package com.example.habitverse.data
 
-class SyncManager(
+import javax.inject.Inject
+
+class SyncManager @Inject constructor(
     private val habitDao: HabitDao,
     private val remoteDataSource: FakeRemoteDataSource
 ) {

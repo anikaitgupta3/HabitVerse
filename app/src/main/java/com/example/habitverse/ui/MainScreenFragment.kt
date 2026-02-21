@@ -25,10 +25,11 @@ import com.example.habitverse.R
 import com.example.habitverse.data.Habit
 import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.getValue
-
+@AndroidEntryPoint
 class MainScreenFragment : Fragment() {
 
     /*companion object {
@@ -36,9 +37,7 @@ class MainScreenFragment : Fragment() {
     }*/
 
     //private val viewModel: MainScreenViewModel by viewModels()
-    private val habitViewModel by activityViewModels<HabitViewModel>{
-        HabitViewModel.Factory
-    }
+    private val habitViewModel by activityViewModels<HabitViewModel>()
     lateinit var binding: FragmentMainScreenBinding
     lateinit var adapter: MainScreenAdapter
 
