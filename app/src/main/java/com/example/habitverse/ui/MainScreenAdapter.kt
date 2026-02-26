@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.habitverse.R
-import com.example.habitverse.data.Habit
+import com.example.habitverse.data.db.Habit
 import com.example.habitverse.databinding.ListItemBinding
 import com.example.habitverse.domain.HabitDomainModel
 

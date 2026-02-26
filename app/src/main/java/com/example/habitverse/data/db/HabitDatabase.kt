@@ -1,9 +1,9 @@
-package com.example.habitverse.data
+package com.example.habitverse.data.db
 
-import android.content.Context
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.habitverse.data.db.Habit
+import com.example.habitverse.data.db.HabitDao
 
 @Database(entities = [Habit::class], version = 2, exportSchema = false)
 abstract class HabitDatabase : RoomDatabase() {

@@ -22,7 +22,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.habitverse.R
-import com.example.habitverse.data.Habit
+import com.example.habitverse.data.db.Habit
 import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
 import dagger.hilt.android.AndroidEntryPoint

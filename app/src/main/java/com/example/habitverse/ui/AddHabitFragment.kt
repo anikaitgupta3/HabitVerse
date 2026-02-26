@@ -19,7 +19,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.example.habitverse.R
 import com.example.habitverse.data.Frequency
-import com.example.habitverse.data.Habit
+import com.example.habitverse.data.db.Habit
 import com.example.habitverse.databinding.FragmentAddHabitBinding
 import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
@@ -183,7 +183,7 @@ class AddHabitFragment : Fragment() {
         navController.navigateUp()
     }
     fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency){
-        habitViewModel.addHabit(HabitDomainModel(habitName = habitName, habitFrequency = habitFrequency))
+        habitViewModel.addHabit(HabitDomainModel(habitName = habitName, habitFrequency = habitFrequency, remoteId = null))
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }

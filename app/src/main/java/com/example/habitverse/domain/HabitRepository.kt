@@ -1,6 +1,6 @@
 package com.example.habitverse.domain
 
-import com.example.habitverse.data.Habit
+import com.example.habitverse.data.db.Habit
 import kotlinx.coroutines.flow.Flow
 
 interface HabitRepository {

@@ -1,4 +1,4 @@
-package com.example.habitverse.data
+package com.example.habitverse.data.db
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -22,8 +22,11 @@ interface HabitDao {
     fun getAllHabits(): Flow<List<Habit>>
 
     @Query("select* from habits where id = :id")
-    fun getHabitsById(id: Int):Flow<Habit>
+    fun getHabitsById(id: Int): Flow<Habit>
 
-    @Query("select* from habits where syncState = 'PENDING'")
-    fun getAllPendingHabits():List<Habit>
+    @Query("select* from habits where syncState != 'SUCCESS'")
+    suspend fun getAllPendingAndFailedHabits():List<Habit>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM habits LIMIT 1)")
+    suspend fun isUserTableNotEmpty(): Boolean
 }

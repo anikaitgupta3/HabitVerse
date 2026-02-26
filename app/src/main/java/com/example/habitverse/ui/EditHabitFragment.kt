@@ -18,7 +18,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.example.habitverse.R
 import com.example.habitverse.data.Frequency
-import com.example.habitverse.data.Habit
+import com.example.habitverse.data.db.Habit
 import com.example.habitverse.databinding.FragmentEditHabitBinding
 import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
@@ -113,7 +113,8 @@ class EditHabitFragment : Fragment() {
                             navController,
                             binding.et1.text.toString(),
                             habitViewModel.selectedFrequency.first()!!,
-                            uiState.currentEditHabit!!.id!!
+                            uiState.currentEditHabit!!.id!!,
+                            uiState.currentEditHabit.remoteId
                         )
                     } else {
                         Toast.makeText(
@@ -151,8 +152,8 @@ class EditHabitFragment : Fragment() {
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
-    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,id:Int){
-        habitViewModel.updateHabit(HabitDomainModel(id = id, habitName = habitName, habitFrequency = habitFrequency))
+    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,id:Int,refId: String?){
+        habitViewModel.updateHabit(HabitDomainModel(id = id, habitName = habitName, habitFrequency = habitFrequency,refId))
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }

@@ -3,8 +3,8 @@ package com.example.habitverse.di
 import android.app.Application
 import android.content.Context
 import androidx.room.Room
-import com.example.habitverse.data.HabitDao
-import com.example.habitverse.data.HabitDatabase
+import com.example.habitverse.data.db.HabitDao
+import com.example.habitverse.data.db.HabitDatabase
 
 import dagger.Module
 import dagger.Provides

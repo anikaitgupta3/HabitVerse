@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "207273878221",
+    "project_id": "habitverse-1d7c4",
+    "storage_bucket": "habitverse-1d7c4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207273878221:android:3701dbe9ae6a7727e17f84",
+        "android_client_info": {
+          "package_name": "com.example.habitverse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXrvVLXXKMq53BUCICOAgzJu1aDYfRWQw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

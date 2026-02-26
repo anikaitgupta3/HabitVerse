@@ -8,8 +8,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.habitverse.HabitVerseApp
 import com.example.habitverse.data.Frequency
-import com.example.habitverse.data.Habit
-import com.example.habitverse.data.SyncManager
+import com.example.habitverse.data.db.Habit
+import com.example.habitverse.data.remote.SyncManager
 import com.example.habitverse.domain.HabitDomainModel
 import com.example.habitverse.domain.HabitRepository
 import com.example.habitverse.domain.HabitUseCase
