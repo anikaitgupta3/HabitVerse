@@ -29,4 +29,7 @@ interface HabitDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM habits LIMIT 1)")
     suspend fun isUserTableNotEmpty(): Boolean
+
+    @Query("DELETE FROM habits")
+    suspend fun deleteAllHabits()
 }

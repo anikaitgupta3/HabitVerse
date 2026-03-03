@@ -2,29 +2,34 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/navigation"
+    android:id="@+id/main_graph"
     app:startDestination="@id/mainScreenFragment">
 
     <fragment
         android:id="@+id/mainScreenFragment"
         android:name="com.example.habitverse.ui.MainScreenFragment"
-        android:label="fragment_main_screen"
-        tools:layout="@layout/fragment_main_screen" >
+        android:label="Main Screen"
+        tools:layout="@layout/fragment_main_screen">
+
         <action
-            android:id="@+id/action_mainScreenFragment_to_addHabitFragment"
+            android:id="@+id/action_main_to_add"
             app:destination="@id/addHabitFragment" />
+
         <action
-            android:id="@+id/action_mainScreenFragment_to_editHabitFragment"
+            android:id="@+id/action_main_to_edit"
             app:destination="@id/editHabitFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/addHabitFragment"
         android:name="com.example.habitverse.ui.AddHabitFragment"
-        android:label="fragment_add_habit"
+        android:label="Add Habit"
         tools:layout="@layout/fragment_add_habit" />
+
     <fragment
         android:id="@+id/editHabitFragment"
         android:name="com.example.habitverse.ui.EditHabitFragment"
-        android:label="fragment_edit_habit"
+        android:label="Edit Habit"
         tools:layout="@layout/fragment_edit_habit" />
+
 </navigation>

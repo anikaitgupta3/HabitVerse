@@ -1,9 +1,9 @@
 package com.example.habitverse.data
 
 import com.example.habitverse.data.db.HabitDao
-import com.example.habitverse.data.remote.SyncManager
 import com.example.habitverse.domain.HabitDomainModel
 import com.example.habitverse.domain.HabitRepository
+import com.example.habitverse.domain.SyncManager
 import com.example.habitverse.toDomain
 import com.example.habitverse.toEntity
 import com.example.habitverse.toEntityInCaseOfDeleted

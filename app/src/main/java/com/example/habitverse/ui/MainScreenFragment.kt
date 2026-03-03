@@ -4,10 +4,15 @@ import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.os.bundleOf
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
@@ -30,7 +35,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.getValue
 @AndroidEntryPoint
-class MainScreenFragment : Fragment() {
+class MainScreenFragment : Fragment(), MenuProvider {
 
     /*companion object {
         fun newInstance() = MainScreenFragment()
@@ -44,6 +49,7 @@ class MainScreenFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //setHasOptionsMenu(true)
         // TODO: Use the ViewModel
     }
 
@@ -63,6 +69,8 @@ class MainScreenFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
         /*ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
@@ -96,6 +104,7 @@ class MainScreenFragment : Fragment() {
             findNavController().navigate(R.id.addHabitFragment)
         }
     }
+
     fun onItemClick(habit: HabitDomainModel){
         habitViewModel.updateCurrentEditHabit(habit)
         findNavController().navigate(R.id.editHabitFragment)
@@ -107,6 +116,26 @@ class MainScreenFragment : Fragment() {
                 Log.d("TAG", uiState.currentEditHabit.toString())
             }
         }*/
+    }
+
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        menuInflater.inflate(R.menu.main_menu, menu)
+    }
+
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
+            R.id.action_logout -> {
+                // Handle search action
+                habitViewModel.syncAllPendingAndFailedHabits()
+                //findNavController().setGraph(R.navigation.auth_graph)
+                findNavController().navigate(R.id.auth_graph)
+                habitViewModel.logout()
+                habitViewModel.cleanRoom()
+                true
+            }
+
+            else -> false
+        }
     }
 
 }

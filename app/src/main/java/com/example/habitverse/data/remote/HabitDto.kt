@@ -3,9 +3,9 @@ package com.example.habitverse.data.remote
 import com.example.habitverse.data.Frequency
 import com.example.habitverse.data.SyncState
 
-data class HabitDto
-    (val id:Int,
-     val habitName: String,
-     val habitFrequency: Frequency,
-     val remoteId: String?
-    )
+data class HabitDto(
+    val id: Int = 0,                         // Added = 0
+    val habitName: String = "",              // Added = ""
+    val habitFrequency: Frequency = Frequency.Daily, // Added a default enum value
+    val remoteId: String? = null             // Added = null
+)

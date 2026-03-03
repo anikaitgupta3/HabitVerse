@@ -18,5 +18,5 @@ fun Habit.toHabitDto(): HabitDto{
     return HabitDto(id,habitName,habitFrequency,remoteId)
 }
 fun HabitDto.toHabit(): Habit{
-    return Habit(id,habitName,habitFrequency, SyncState.SUCCESS,false,remoteId)
+    return Habit(id=0,habitName,habitFrequency, SyncState.SUCCESS,false,remoteId)
 }
