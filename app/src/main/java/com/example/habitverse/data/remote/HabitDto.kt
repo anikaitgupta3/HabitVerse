@@ -7,5 +7,6 @@ data class HabitDto(
     val id: Int = 0,                         // Added = 0
     val habitName: String = "",              // Added = ""
     val habitFrequency: Frequency = Frequency.Daily, // Added a default enum value
+    val imageUrl: String?,
     val remoteId: String? = null             // Added = null
 )

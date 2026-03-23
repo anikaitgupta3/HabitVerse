@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.navigation.ui.ktx)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.storage)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
@@ -78,4 +80,5 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:2.59.1")
     ksp("com.google.dagger:hilt-android-compiler:2.59.1")
+    implementation ("com.github.bumptech.glide:glide:5.0.5")
 }

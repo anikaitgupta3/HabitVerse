@@ -1,17 +1,20 @@
 package com.example.habitverse.ui
 
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -19,14 +22,13 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.example.habitverse.R
 import com.example.habitverse.data.Frequency
-import com.example.habitverse.data.db.Habit
 import com.example.habitverse.databinding.FragmentAddHabitBinding
-import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.getValue
+import java.io.File
+
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -45,6 +47,7 @@ class AddHabitFragment : Fragment() {
     //private var param2: String? = null
     lateinit var binding: FragmentAddHabitBinding
     private val habitViewModel by activityViewModels<HabitViewModel>()
+    var localImagePath: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /*arguments?.let {
@@ -111,7 +114,8 @@ class AddHabitFragment : Fragment() {
                         clickOnSaveButton(
                             navController,
                             binding.et1.text.toString(),
-                            habitViewModel.selectedFrequency.first()!!
+                            habitViewModel.selectedFrequency.first()!!,
+                            localImagePath
                         )
                     } else {
                         Toast.makeText(
@@ -122,6 +126,24 @@ class AddHabitFragment : Fragment() {
                     }
                 }
             }
+        }
+        val imagePicker = registerForActivityResult<PickVisualMediaRequest?, Uri?>(
+            PickVisualMedia(), ActivityResultCallback { uri: Uri? ->
+                if (uri == null) {
+                    Toast.makeText(requireContext(), "No image Selected", Toast.LENGTH_SHORT).show()
+
+                } else {
+                    binding.ivHabitIcon.setImageURI(uri)
+                    localImagePath = saveImageToInternalStorage(requireContext(),uri)
+
+                }
+            })
+        binding.btAddImage.setOnClickListener {
+            imagePicker.launch(
+                PickVisualMediaRequest.Builder()
+                    .setMediaType(ImageOnly)
+                    .build()
+            )
         }
     }
 
@@ -142,6 +164,21 @@ class AddHabitFragment : Fragment() {
             Log.d("TAG", selectedFrequency.frequency)
         }
     }*/
+    fun saveImageToInternalStorage(context: Context, uri: Uri): String? {
+        val fileName = "habit_${System.currentTimeMillis()}.jpg"
+        val file = File(context.filesDir, fileName)
+
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            file.absolutePath // This is what you store in Room
+        } catch (e: Exception) {
+            null
+        }
+    }
     override fun onResume() {
         super.onResume()
         // get reference to the string array that we just created
@@ -182,8 +219,17 @@ class AddHabitFragment : Fragment() {
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
-    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency){
-        habitViewModel.addHabit(HabitDomainModel(habitName = habitName, habitFrequency = habitFrequency, remoteId = null))
+    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,localImagePath: String?){
+        habitViewModel.addHabit(
+            HabitDomainModel(
+                habitName = habitName,
+                habitFrequency = habitFrequency,
+                remoteId = null,
+                imageUrl = null,
+                localImagePath = localImagePath
+            ),
+            localImagePath = localImagePath
+        )
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }

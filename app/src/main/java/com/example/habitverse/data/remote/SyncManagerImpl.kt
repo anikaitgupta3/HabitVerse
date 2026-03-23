@@ -2,6 +2,7 @@ package com.example.habitverse.data.remote
 
 
 import android.util.Log
+import com.example.habitverse.data.ImageSyncState
 import com.example.habitverse.data.SyncState
 import com.example.habitverse.data.db.Habit
 import com.example.habitverse.data.db.HabitDao
@@ -14,7 +15,8 @@ import javax.inject.Inject
 class SyncManagerImpl @Inject constructor(
     private val habitDao: HabitDao,
     private val remoteDataSource: RemoteDataSource,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val storageDataSource: StorageDataSource
 ): SyncManager {
 
     override suspend fun sync() {
@@ -46,6 +48,9 @@ class SyncManagerImpl @Inject constructor(
     private suspend fun syncSingleHabit(habit: Habit) {
         val currentUserId = authRepository.getUserId()
         if (habit.isDeleted) {
+            if(habit.imageSyncState == ImageSyncState.PENDING){
+                storageDataSource.deleteImage(currentUserId!!, habit.id.toString())
+            }
             if(habit.remoteId !=null) {
                 remoteDataSource.deleteHabit(habit.remoteId,currentUserId!!)
             }
@@ -53,20 +58,52 @@ class SyncManagerImpl @Inject constructor(
             return
         }
         else if (habit.remoteId == null) {
-            val remoteId=remoteDataSource.insertHabit(habit.toHabitDto(),currentUserId!!)
-            updateLocalWithRemoteId(habit,remoteId)
+            if(habit.imageSyncState == ImageSyncState.PENDING){ //Image selected
+                storageDataSource.uploadImage(currentUserId!!, habit.id.toString(),habit.localImagePath!!)
+                val imageRemoteUrl = storageDataSource.getDownloadUrl(currentUserId, habit.id.toString())
+                val remoteId=remoteDataSource.insertHabit(habit.toHabitDto(imageRemoteUrl),currentUserId)
+                updateLocalWithRemoteIdAndRemoteUrl(habit,remoteId,imageRemoteUrl)
+            }
+            else{ //No image selected
+                val remoteId=remoteDataSource.insertHabit(habit.toHabitDto(null),currentUserId!!)
+                updateLocalWithRemoteId(habit,remoteId)
+            }
+
             //markAsSynced(habit)
             return
         }
         else {
             // Otherwise update existing
-            remoteDataSource.updateHabit(habit.toHabitDto(),habit.remoteId,currentUserId!!)
-            markAsSynced(habit)
+            if(habit.imageSyncState == ImageSyncState.PENDING){
+                if(habit.imageUrl != null){
+                    storageDataSource.deleteImage(currentUserId!!, habit.id.toString())
+                    storageDataSource.uploadImage(currentUserId, habit.id.toString(),habit.localImagePath!!)
+                    val imageRemoteUrl = storageDataSource.getDownloadUrl(currentUserId, habit.id.toString())
+                    remoteDataSource.updateHabit(habit.toHabitDto(imageRemoteUrl),habit.remoteId,currentUserId)
+                    updateLocalWithRemoteIdAndRemoteUrl(habit,habit.remoteId,imageRemoteUrl)
+
+                }
+                else{
+                    storageDataSource.uploadImage(currentUserId!!, habit.id.toString(),habit.localImagePath!!)
+                    val imageRemoteUrl = storageDataSource.getDownloadUrl(currentUserId, habit.id.toString())
+                    remoteDataSource.updateHabit(habit.toHabitDto(imageRemoteUrl),habit.remoteId,currentUserId)
+                    updateLocalWithRemoteIdAndRemoteUrl(habit,habit.remoteId,imageRemoteUrl)
+                }
+            }
+            else {
+                remoteDataSource.updateHabit(habit.toHabitDto(habit.imageUrl), habit.remoteId, currentUserId!!)
+                markAsSynced(habit)
+            }
         }
     }
     private suspend fun updateLocalWithRemoteId(habit: Habit,remoteId: String){
         habitDao.editHabit(
             habit.copy(remoteId = remoteId,syncState = SyncState.SUCCESS)
+        )
+    }
+    private suspend fun updateLocalWithRemoteIdAndRemoteUrl(habit: Habit,remoteId: String,remoteUrl: String){
+        habitDao.editHabit(
+            habit.copy(remoteId = remoteId,syncState = SyncState.SUCCESS, imageUrl = remoteUrl, imageSyncState = ImageSyncState.SUCCESS)
         )
     }
     private suspend fun markAsSynced(habit: Habit) {

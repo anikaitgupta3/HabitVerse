@@ -6,6 +6,7 @@ import com.example.habitverse.data.remote.RemoteDataSource
 import com.example.habitverse.domain.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,5 +35,10 @@ object RemoteDataModule {
     @Provides
     fun provideAuthRepository(firebaseAuth: FirebaseAuth): AuthRepository{
         return AuthRepositoryImpl(firebaseAuth)
+    }
+    @Singleton
+    @Provides
+    fun provideFirebaseStorage(): FirebaseStorage{
+        return FirebaseStorage.getInstance()
     }
 }

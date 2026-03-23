@@ -7,14 +7,22 @@ import com.example.habitverse.domain.SyncManager
 import com.example.habitverse.toDomain
 import com.example.habitverse.toEntity
 import com.example.habitverse.toEntityInCaseOfDeleted
+import com.example.habitverse.toEntityInCaseOfDeletedAndNoImageStored
+import com.example.habitverse.toEntityInCaseOfNullImagePassed
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class HabitRepositoryImpl @Inject constructor(private val habitDao: HabitDao,private val syncManager: SyncManager): HabitRepository {
-    override suspend fun insertHabit(habitDomainModel: HabitDomainModel) {
+    override suspend fun insertHabit(habitDomainModel: HabitDomainModel,localImagePath: String?) {
         //TODO("Not yet implemented")
-        habitDao.insertHabit(habitDomainModel.toEntity())
+        if(localImagePath!=null) {
+            habitDao.insertHabit(habitDomainModel.toEntity())
+        }
+        else{
+            habitDao.insertHabit(habitDomainModel.toEntityInCaseOfNullImagePassed())
+        }
         syncManager.sync()
 
     }
@@ -22,13 +30,25 @@ class HabitRepositoryImpl @Inject constructor(private val habitDao: HabitDao,pri
     override suspend fun deleteHabit(habitDomainModel: HabitDomainModel) {
         //TODO("Not yet implemented")
         //habitDao.deleteHabit(habitDomainModel.toEntity())
-        habitDao.editHabit(habitDomainModel.toEntityInCaseOfDeleted())
+        val habitInRoom = habitDao.getHabitsById(habitDomainModel.id!!).first()
+        if(habitInRoom.imageUrl == null){
+            habitDao.editHabit(habitDomainModel.toEntityInCaseOfDeletedAndNoImageStored())
+        }
+        else {
+            habitDao.editHabit(habitDomainModel.toEntityInCaseOfDeleted())
+        }
         syncManager.sync()
     }
 
-    override suspend fun editHabit(habitDomainModel: HabitDomainModel) {
+    override suspend fun editHabit(habitDomainModel: HabitDomainModel,localImagePath: String?) {
         //TODO("Not yet implemented")
-        habitDao.editHabit(habitDomainModel.toEntity())
+        val habitInRoom = habitDao.getHabitsById(habitDomainModel.id!!).first()
+        if(localImagePath == null || habitInRoom.localImagePath == localImagePath){
+            habitDao.editHabit(habitDomainModel.toEntityInCaseOfNullImagePassed())
+        }
+        else {
+            habitDao.editHabit(habitDomainModel.toEntity())
+        }
         syncManager.sync()
     }
 

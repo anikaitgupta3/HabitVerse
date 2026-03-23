@@ -1,5 +1,6 @@
 package com.example.habitverse.ui
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -116,16 +117,16 @@ class HabitViewModel @Inject constructor(
             initialValue = HabitUiState()
         )
 
-    fun addHabit(habit: HabitDomainModel) = viewModelScope.launch {
-        habitUseCase.insertHabit(habit)
+    fun addHabit(habit: HabitDomainModel,localImagePath: String?) = viewModelScope.launch {
+        habitUseCase.insertHabit(habit,localImagePath)
     }
 
     fun deleteHabit(habit: HabitDomainModel) = viewModelScope.launch {
         habitUseCase.deleteHabit(habit)
     }
 
-    fun updateHabit(habit: HabitDomainModel) = viewModelScope.launch {
-        habitUseCase.editHabit(habit)
+    fun updateHabit(habit: HabitDomainModel,localImagePath: String?) = viewModelScope.launch {
+        habitUseCase.editHabit(habit,localImagePath)
     }
     fun updateCurrentFrequencyFragment(frequency: Frequency){
         _selectedFrequency.value = frequency
@@ -194,4 +195,16 @@ class HabitViewModel @Inject constructor(
             _currentEditHabit.value=habit
         }
     }*/
+    fun deleteInternalStorageFiles(context: Context) {
+        val directory = context.filesDir
+        val files = directory.listFiles()
+
+        files?.forEach { file ->
+            // Optional: Check for a specific prefix if you store other files there
+            // if (file.name.startsWith("habit_"))
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+    }
 }

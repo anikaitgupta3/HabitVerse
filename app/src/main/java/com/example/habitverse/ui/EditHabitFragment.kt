@@ -1,5 +1,7 @@
 package com.example.habitverse.ui
 
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -8,6 +10,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -16,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.example.habitverse.R
 import com.example.habitverse.data.Frequency
 import com.example.habitverse.data.db.Habit
@@ -25,6 +32,7 @@ import com.example.habitverse.domain.HabitDomainModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -43,6 +51,7 @@ class EditHabitFragment : Fragment() {
     //private var param2: String? = null
     lateinit var binding: FragmentEditHabitBinding
     private val habitViewModel by activityViewModels<HabitViewModel>()
+    var localImagePath: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /*arguments?.let {
@@ -73,6 +82,7 @@ class EditHabitFragment : Fragment() {
                 //Log.d("TAG1",habitViewModel.selectedFrequency.first().toString())
                 //Log.d("TAG2",habitViewModel.habitUiState.first().currentEditHabit.toString())
 
+
                 if (habitViewModel.selectedFrequency.first() != null) {
                     val frequencyValue = habitViewModel.selectedFrequency.first()!!.frequency
                     if (binding.autoCompleteTextView.text.toString() != frequencyValue) {
@@ -82,6 +92,23 @@ class EditHabitFragment : Fragment() {
                 } //In case screen just open on click of recyclerview item
                 else {
                     val uiState = habitViewModel.habitUiState.first()
+                    val imageToLoad = when {
+                        uiState.currentEditHabit!!.localImagePath != null && File(uiState.currentEditHabit.localImagePath).exists() -> {
+                            // 1. Load from local file (Fastest & Offline)
+                            File(uiState.currentEditHabit.localImagePath)
+                            //localImagePath = uiState.currentEditHabit!!.localImagePath
+                        }
+                        uiState.currentEditHabit.imageUrl != null -> {
+                            // 2. Fallback to Firebase URL (If local file was lost)
+                            uiState.currentEditHabit.imageUrl
+                        }
+                        else -> {
+                            // 3. Placeholder
+                            //R.drawable.placeholder_habit
+                        }
+                    }
+
+                    Glide.with(requireContext()).load(imageToLoad).into(binding.ivHabitImage)
                     binding.et1.setText(uiState.currentEditHabit!!.habitName)
                     binding.autoCompleteTextView.setText(
                         uiState.currentEditHabit.habitFrequency.frequency,
@@ -114,7 +141,8 @@ class EditHabitFragment : Fragment() {
                             binding.et1.text.toString(),
                             habitViewModel.selectedFrequency.first()!!,
                             uiState.currentEditHabit!!.id!!,
-                            uiState.currentEditHabit.remoteId
+                            uiState.currentEditHabit.remoteId,
+                            uiState.currentEditHabit.imageUrl
                         )
                     } else {
                         Toast.makeText(
@@ -126,6 +154,25 @@ class EditHabitFragment : Fragment() {
                 }
             }
         }
+        val imagePicker = registerForActivityResult<PickVisualMediaRequest?, Uri?>(
+            PickVisualMedia(), ActivityResultCallback { uri: Uri? ->
+                if (uri == null) {
+                    Toast.makeText(requireContext(), "No image Selected", Toast.LENGTH_SHORT).show()
+
+                } else {
+                    binding.ivHabitImage.setImageURI(uri)
+                    localImagePath = saveImageToInternalStorage(requireContext(),uri)
+
+                }
+            })
+        binding.btUpdateImage.setOnClickListener {
+            imagePicker.launch(
+                PickVisualMediaRequest.Builder()
+                    .setMediaType(ImageOnly)
+                    .build()
+            )
+        }
+
     }
     override fun onResume() {
         super.onResume()
@@ -147,13 +194,28 @@ class EditHabitFragment : Fragment() {
         super.onDestroyView()
         habitViewModel.updateCurrentFrequencyFragmentToNull()
     }
+    fun saveImageToInternalStorage(context: Context, uri: Uri): String? {
+        val fileName = "habit_${System.currentTimeMillis()}.jpg"
+        val file = File(context.filesDir, fileName)
+
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            file.absolutePath // This is what you store in Room
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     fun clickOnBackButton(navController: NavController){
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
-    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,id:Int,refId: String?){
-        habitViewModel.updateHabit(HabitDomainModel(id = id, habitName = habitName, habitFrequency = habitFrequency,refId))
+    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,id:Int,refId: String?,imageUrl: String?){
+        habitViewModel.updateHabit(HabitDomainModel(id = id, habitName = habitName, habitFrequency = habitFrequency, remoteId = refId, imageUrl = imageUrl, localImagePath = localImagePath,),localImagePath)
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
