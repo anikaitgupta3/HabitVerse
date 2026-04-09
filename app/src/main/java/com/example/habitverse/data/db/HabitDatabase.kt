@@ -2,10 +2,12 @@ package com.example.habitverse.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.example.habitverse.data.db.Habit
 import com.example.habitverse.data.db.HabitDao
 
-@Database(entities = [Habit::class], version = 2, exportSchema = false)
+@Database(entities = [Habit::class, HabitLog::class], version = 3, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class HabitDatabase : RoomDatabase() {
     abstract fun habitDao(): HabitDao
 

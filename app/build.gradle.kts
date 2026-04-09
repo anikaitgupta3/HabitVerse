@@ -4,6 +4,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -20,6 +21,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -32,6 +34,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -41,6 +44,10 @@ android {
     buildFeatures {
         dataBinding = true
         viewBinding = true
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
     }
 
 }
@@ -78,4 +85,22 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:2.59.1")
     ksp("com.google.dagger:hilt-android-compiler:2.59.1")
+    implementation(platform("androidx.compose:compose-bom:2026.03.01"))
+    // other dependencies
+    // Compose
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.compose.material3:material3")
+    implementation("com.google.accompanist:accompanist-themeadapter-material3:0.36.0")
+
+
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("androidx.hilt:hilt-work:1.3.0")
+
+    // Annotation processor (use ksp if configured, otherwise kapt)
+    ksp("androidx.hilt:hilt-compiler:1.3.0")
+
+    // Standard WorkManager dependency
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
+
 }

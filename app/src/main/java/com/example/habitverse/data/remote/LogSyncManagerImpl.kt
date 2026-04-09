@@ -1,0 +1,81 @@
+package com.example.habitverse.data.remote
+
+import android.util.Log
+import com.example.habitverse.data.SyncState
+import com.example.habitverse.data.db.HabitDao
+import com.example.habitverse.data.db.HabitLog
+import com.example.habitverse.domain.AuthRepository
+import com.example.habitverse.domain.SyncManager
+import com.example.habitverse.toHabitLog
+import com.example.habitverse.toHabitLogDto
+import javax.inject.Inject
+
+class LogSyncManagerImpl @Inject constructor(
+    private val habitDao: HabitDao,
+    private val logRemoteDataSource: LogRemoteDataSource,
+    private val authRepository: AuthRepository
+): SyncManager {
+    override suspend fun sync() {
+        val pendingAndFailedLogs = habitDao.getPendingLogSyncs()
+        for (log in pendingAndFailedLogs) {
+            try {
+                syncSingleLog(log)
+            } catch (e: Exception) {
+                markAsFailed(log)
+            }
+        }
+    }
+
+    override suspend fun cleanRoomAndUpdateRoom() {
+        try {
+            habitDao.deleteAllHabitLogs()
+            insertAllLogs()
+        } catch (e: Exception) {
+            Log.e("LOG_SYNC_ERROR", e.message, e)
+        }
+    }
+
+    override suspend fun cleanRoom() {
+        habitDao.deleteAllHabitLogs()
+    }
+
+    private suspend fun syncSingleLog(log: HabitLog) {
+        val currentUserId = authRepository.getUserId() ?: return
+        if (log.isDeleted) {
+            if (log.remoteId != null) {
+                logRemoteDataSource.deleteLog(log.remoteId, currentUserId)
+            }
+            permanentlyDeleteLocal(log)
+            return
+        } else if (log.remoteId == null) {
+            val remoteId = logRemoteDataSource.insertLog(log.toHabitLogDto(), log.habitId, currentUserId)
+            updateLocalWithRemoteId(log, remoteId)
+            return
+        }
+    }
+
+    private suspend fun updateLocalWithRemoteId(log: HabitLog, remoteId: String) {
+        habitDao.updateLog(
+            log.copy(remoteId = remoteId, syncState = SyncState.SUCCESS)
+        )
+    }
+
+
+    private suspend fun markAsFailed(log: HabitLog) {
+        habitDao.updateLog(
+            log.copy(syncState = SyncState.FAILED)
+        )
+    }
+
+    private suspend fun permanentlyDeleteLocal(log: HabitLog) {
+        habitDao.permanentlyDeleteLog(log)
+    }
+
+    private suspend fun insertAllLogs() {
+        val currentUserId = authRepository.getUserId() ?: return
+        val logList = logRemoteDataSource.getAllLogs(currentUserId)
+        for (logDto in logList) {
+            habitDao.insertLog(logDto.toHabitLog())
+        }
+    }
+}

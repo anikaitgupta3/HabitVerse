@@ -5,4 +5,5 @@ plugins {
     id("com.google.devtools.ksp") version "2.3.4" apply false
     id("com.google.dagger.hilt.android") version "2.59.1" apply false
     alias(libs.plugins.google.gms.google.services) apply false
+    alias(libs.plugins.compose.compiler) apply false
 }

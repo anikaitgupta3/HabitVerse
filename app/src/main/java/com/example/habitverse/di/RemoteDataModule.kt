@@ -2,6 +2,8 @@ package com.example.habitverse.di
 
 import com.example.habitverse.data.AuthRepositoryImpl
 import com.example.habitverse.data.remote.FirebaseRemoteDataSource
+import com.example.habitverse.data.remote.LogRemoteDataSource
+import com.example.habitverse.data.remote.LogRemoteDataSourceImpl
 import com.example.habitverse.data.remote.RemoteDataSource
 import com.example.habitverse.domain.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -34,5 +36,10 @@ object RemoteDataModule {
     @Provides
     fun provideAuthRepository(firebaseAuth: FirebaseAuth): AuthRepository{
         return AuthRepositoryImpl(firebaseAuth)
+    }
+    @Singleton
+    @Provides
+    fun provideLogRemoteDataSource(firestore: FirebaseFirestore): LogRemoteDataSource {
+        return LogRemoteDataSourceImpl(firestore)
     }
 }

@@ -6,14 +6,24 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.example.habitverse.HabitVerseApp
+import com.example.habitverse.NotificationUtils
 import com.example.habitverse.data.Frequency
+import com.example.habitverse.data.SyncState
 import com.example.habitverse.data.db.Habit
+import com.example.habitverse.data.db.HabitLog
+import com.example.habitverse.di.HabitSync
+import com.example.habitverse.di.LogSync
 import com.example.habitverse.domain.AuthRepository
 import com.example.habitverse.domain.HabitDomainModel
 import com.example.habitverse.domain.HabitRepository
 import com.example.habitverse.domain.HabitUseCase
 import com.example.habitverse.domain.SyncManager
+import com.example.habitverse.toDomain
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +36,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 data class HabitUiState(
@@ -79,7 +91,7 @@ data class HabitUiState(
 
 @HiltViewModel
 class HabitViewModel @Inject constructor(
-    private val habitUseCase: HabitUseCase,private val syncManager: SyncManager,private val authRepository: AuthRepository
+    private val habitUseCase: HabitUseCase, @HabitSync private val syncManager: SyncManager, @LogSync private val logSyncManager: SyncManager, private val authRepository: AuthRepository, private val workManager: WorkManager
 ) : ViewModel() {
 
     private val _currentEditHabit = MutableStateFlow<HabitDomainModel?>(null)
@@ -92,6 +104,9 @@ class HabitViewModel @Inject constructor(
             viewModelScope.launch(Dispatchers.IO) {
                 syncManager.sync()
             }
+            viewModelScope.launch(Dispatchers.IO) {
+                logSyncManager.sync()
+            }
         }
     }
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -100,8 +115,21 @@ class HabitViewModel @Inject constructor(
     private val _registrationState = MutableStateFlow<RegistrationState>(RegistrationState.Idle)
     val registrationState = _registrationState.asStateFlow()
 
+//    private val _pickedTimeHour = MutableStateFlow(10)
+//    val pickedTimeHour: StateFlow<Int> = _pickedTimeHour
+//
+//    private val _pickedTimeMinutes = MutableStateFlow(0)
+//    val pickedTimeMinutes: StateFlow<Int> = _pickedTimeMinutes
+    private var _pickedTimeHour: Int = 10
+    val pickedTimeHour get() = _pickedTimeHour
 
-    val habitUiState: StateFlow<HabitUiState> =
+    private var _pickedTimeMinutes: Int = 0
+    val pickedTimeMinutes get() = _pickedTimeMinutes  // ❌ was _pickedTimeHour, fix this typo
+
+    private val todayDate = LocalDate.now().toString()
+
+
+    /*val habitUiState: StateFlow<HabitUiState> =
         combine(
             habitUseCase.getAllHabits(),
             _currentEditHabit
@@ -114,18 +142,37 @@ class HabitViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = HabitUiState()
-        )
+        )*/
+    // Combined UI State
+    val habitUiState: StateFlow<HabitUiState> = combine(
+        habitUseCase.getAllHabitsWithLogs(),
+        _currentEditHabit
+    ) { habitsWithLogs, currentEdit ->
+        val mapped = habitsWithLogs.map { item ->
+           // item.habit.toDomain(isCompleted = item.logs.any { it.completionDate == todayDate })
+            // CRITICAL: Filter out logs that are marked as deleted locally
+            val activeLogs = item.logs.filter { !it.isDeleted }
+
+            val isDone = activeLogs.any { it.completionDate == todayDate }
+            item.habit.toDomain(isCompleted = isDone)
+        }
+        HabitUiState(listOfHabits = mapped, currentEditHabit = currentEdit)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitUiState())
 
     fun addHabit(habit: HabitDomainModel) = viewModelScope.launch {
-        habitUseCase.insertHabit(habit)
+        val id = habitUseCase.insertHabit(habit)
+        handleWorkManagement(habit.copy(id = id),isDeleted = false)
+
     }
 
     fun deleteHabit(habit: HabitDomainModel) = viewModelScope.launch {
         habitUseCase.deleteHabit(habit)
+        handleWorkManagement(habit,isDeleted = true)
     }
 
     fun updateHabit(habit: HabitDomainModel) = viewModelScope.launch {
         habitUseCase.editHabit(habit)
+        handleWorkManagement(habit,isDeleted = false)
     }
     fun updateCurrentFrequencyFragment(frequency: Frequency){
         _selectedFrequency.value = frequency
@@ -141,16 +188,37 @@ class HabitViewModel @Inject constructor(
         viewModelScope.launch {
             syncManager.sync()
         }
+        viewModelScope.launch {
+            logSyncManager.sync()
+        }
     }
      fun clearRoomAndUpdateRoom(){
          viewModelScope.launch {
              syncManager.cleanRoomAndUpdateRoom()
+
          }
+         viewModelScope.launch {
+             logSyncManager.cleanRoomAndUpdateRoom()
+             scheduleWorkManagerNotifications()
+
+
+         }
+    }
+    fun scheduleWorkManagerNotifications(){
+        val listOfHabits = habitUiState.value.listOfHabits
+        listOfHabits.forEach {
+            handleWorkManagement(it,isDeleted = false)
+        }
+
     }
     fun cleanRoom(){
         viewModelScope.launch {
             syncManager.cleanRoom()
         }
+        viewModelScope.launch {
+            logSyncManager.cleanRoom()
+        }
+        workManager.cancelAllWork()
     }
      fun createAccount(emailId: String, password: String) {
         viewModelScope.launch {
@@ -188,10 +256,42 @@ class HabitViewModel @Inject constructor(
     fun checkLoggedIn(): Boolean{
         return authRepository.checkLoggedIn()
     }
+
+    fun setPickedTime(hour: Int, minutes: Int) {
+        _pickedTimeHour = hour
+        _pickedTimeMinutes = minutes
+    }
     /*fun updateCurrentEditHabitById(id:Int){
         viewModelScope.launch {
             val habit=habitRepository.getHabitsById(id).first()
             _currentEditHabit.value=habit
         }
     }*/
+    // --- WorkManager Control Logic ---
+    fun handleWorkManagement(habit: HabitDomainModel,isDeleted: Boolean) {
+        if (habit.showNotification && !isDeleted) {
+            val delay = NotificationUtils.calculateInitialDelay(habit.timeToShowNotification)
+            val request = OneTimeWorkRequestBuilder<HabitReminderWorker>()
+                .setInitialDelay(delay, TimeUnit.MINUTES)
+                .setInputData(workDataOf("HABIT_ID" to habit.id))
+                .addTag("habit_${habit.id}")
+                .build()
+
+            workManager.enqueueUniqueWork(
+                "habit_reminder_${habit.id}",
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
+        } else {
+            workManager.cancelUniqueWork("habit_reminder_${habit.id}")
+        }
+    }
+
+    fun toggleCompletion(habitId: Long, isCurrentlyDone: Boolean) {
+        viewModelScope.launch {
+            if (isCurrentlyDone) habitUseCase.deleteLog(habitId, todayDate)
+            else habitUseCase.insertLog(HabitLog(habitId = habitId, completionDate = todayDate, isDeleted = false, syncState = SyncState.PENDING, remoteId = null))
+        }
+    }
 }
+

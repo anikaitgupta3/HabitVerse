@@ -1,6 +1,13 @@
 package com.example.habitverse.ui
 
+import android.Manifest
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -8,6 +15,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.rememberTimePickerState
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -22,9 +35,11 @@ import com.example.habitverse.data.db.Habit
 import com.example.habitverse.databinding.FragmentEditHabitBinding
 import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.LocalTime
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -61,6 +76,7 @@ class EditHabitFragment : Fragment() {
         return binding.root
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val navController = findNavController()
@@ -87,7 +103,14 @@ class EditHabitFragment : Fragment() {
                         uiState.currentEditHabit.habitFrequency.frequency,
                         false
                     )
+                    if(uiState.currentEditHabit.showNotification && verifyNotificationPermissionIsThere()){
+                        binding.cbReminder.isChecked = true
+                    }
+                    else{
+                        binding.cbReminder.isChecked=false
+                    }
                     habitViewModel.updateCurrentFrequencyFragment(uiState.currentEditHabit.habitFrequency)
+                    habitViewModel.setPickedTime(uiState.currentEditHabit.timeToShowNotification.hour,uiState.currentEditHabit.timeToShowNotification.minute)
                 }
             }
         }
@@ -114,7 +137,9 @@ class EditHabitFragment : Fragment() {
                             binding.et1.text.toString(),
                             habitViewModel.selectedFrequency.first()!!,
                             uiState.currentEditHabit!!.id!!,
-                            uiState.currentEditHabit.remoteId
+                            uiState.currentEditHabit.remoteId,
+                            binding.cbReminder.isChecked,
+                            uiState.currentEditHabit.isCompleted
                         )
                     } else {
                         Toast.makeText(
@@ -124,6 +149,28 @@ class EditHabitFragment : Fragment() {
                         ).show()
                     }
                 }
+            }
+        }
+        binding.cbReminder.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked){
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    checkNotificationPermission()
+                }
+            }
+        }
+        binding.timePickerComposeView.setContent {
+            MaterialTheme {
+                val timePickerState = rememberTimePickerState(
+                    initialHour = habitViewModel.pickedTimeHour,
+                    initialMinute = habitViewModel.pickedTimeMinutes,
+                    is24Hour = true,
+                )
+                HabitTimePicker(timePickerState)
+                // ✅ Triggers whenever hour or minute changes
+//                LaunchedEffect(timePickerState.hour, timePickerState.minute) {
+//                    habitViewModel.setPickedTime(timePickerState.hour, timePickerState.minute)
+//                }
+                habitViewModel.setPickedTime(timePickerState.hour, timePickerState.minute)
             }
         }
     }
@@ -152,8 +199,9 @@ class EditHabitFragment : Fragment() {
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
-    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,id:Int,refId: String?){
-        habitViewModel.updateHabit(HabitDomainModel(id = id, habitName = habitName, habitFrequency = habitFrequency,refId))
+    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,id:Long,refId: String?,isChecked: Boolean,isCompleted: Boolean){
+        habitViewModel.updateHabit(HabitDomainModel(id = id, habitName = habitName, habitFrequency = habitFrequency,refId,isChecked,
+            LocalTime.of(habitViewModel.pickedTimeHour,habitViewModel.pickedTimeMinutes),isCompleted))
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
@@ -161,6 +209,89 @@ class EditHabitFragment : Fragment() {
         habitViewModel.deleteHabit(habit)
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
+    }
+    fun verifyNotificationPermissionIsThere(): Boolean{
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU){
+            return true
+        }
+        else{
+            return ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private val notificationPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+            ::onNotificationPermissionResult
+        )
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun checkNotificationPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                onNotificationPermissionGranted()
+            }
+            shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                showRationaleDialog()
+            }
+            else -> {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun onNotificationPermissionResult(granted: Boolean) {
+        if (granted) {
+            onNotificationPermissionGranted()
+        } else if (!shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+            showSettingsDialog()
+        }
+        // else: denied without "Don't ask again" — do nothing
+    }
+
+    private fun onNotificationPermissionGranted() {
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun showRationaleDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Permission Required")
+            .setMessage("This app needs notification permission to remind you about your habits.")
+            .setPositiveButton("Grant") { _, _ ->
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                binding.cbReminder.isChecked = false
+            }
+            .show()
+    }
+
+    private fun showSettingsDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Permission Required")
+            .setMessage("Notification permission was permanently denied. Please enable it in App Settings.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                try {
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).also { intent ->
+                        intent.data = Uri.fromParts("package", requireActivity().packageName, null)
+                        startActivity(intent)
+                    }
+                } catch (e: ActivityNotFoundException) {
+                    Toast.makeText(requireContext(), "Cannot open settings", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                binding.cbReminder.isChecked = false
+            }
+            .show()
     }
 
     /*companion object {

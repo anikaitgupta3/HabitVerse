@@ -1,25 +1,32 @@
 package com.example.habitverse.ui
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.ActivityNotFoundException
+import android.content.Context.NOTIFICATION_SERVICE
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.os.bundleOf
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -27,13 +34,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.habitverse.R
-import com.example.habitverse.data.db.Habit
 import com.example.habitverse.databinding.FragmentMainScreenBinding
 import com.example.habitverse.domain.HabitDomainModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.getValue
+
 @AndroidEntryPoint
 class MainScreenFragment : Fragment(), MenuProvider {
 
@@ -51,6 +57,8 @@ class MainScreenFragment : Fragment(), MenuProvider {
         super.onCreate(savedInstanceState)
         //setHasOptionsMenu(true)
         // TODO: Use the ViewModel
+
+
     }
 
     override fun onCreateView(
@@ -60,9 +68,9 @@ class MainScreenFragment : Fragment(), MenuProvider {
         //return inflater.inflate(R.layout.fragment_main_screen, container, false)
         binding= DataBindingUtil.inflate(inflater, R.layout.fragment_main_screen, container, false)
         binding.rview.layoutManager = LinearLayoutManager(this.context)
-        adapter = MainScreenAdapter(){
-            habit -> onItemClick(habit)
-        }
+        adapter = MainScreenAdapter({
+                habit -> onItemClick(habit)
+        },{habit,isChecked->onCheckboxCheckedChanged(habit,!isChecked)})
         binding.rview.adapter=adapter
         return binding.root
     }
@@ -87,7 +95,9 @@ class MainScreenFragment : Fragment(), MenuProvider {
             insets
         }*/
 
-
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            checkNotificationPermission()
+        }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 habitViewModel.habitUiState.collect { uiState ->
@@ -102,11 +112,13 @@ class MainScreenFragment : Fragment(), MenuProvider {
         )
         binding.fab.setOnClickListener {
             findNavController().navigate(R.id.addHabitFragment)
+            habitViewModel.setPickedTime(10,0)
         }
     }
 
     fun onItemClick(habit: HabitDomainModel){
         habitViewModel.updateCurrentEditHabit(habit)
+        habitViewModel.setPickedTime(habit.timeToShowNotification.hour,habit.timeToShowNotification.minute)
         findNavController().navigate(R.id.editHabitFragment)
         //val bundle = bundleOf("Key" to habit.id)
         //findNavController().navigate(R.id.editHabitFragment,bundle)
@@ -116,6 +128,9 @@ class MainScreenFragment : Fragment(), MenuProvider {
                 Log.d("TAG", uiState.currentEditHabit.toString())
             }
         }*/
+    }
+    fun onCheckboxCheckedChanged(habit: HabitDomainModel,isCurrentlyDone: Boolean){
+        habitViewModel.toggleCompletion(habit.id!!,isCurrentlyDone)
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -136,6 +151,81 @@ class MainScreenFragment : Fragment(), MenuProvider {
 
             else -> false
         }
+    }
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private val notificationPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+            ::onNotificationPermissionResult
+        )
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun checkNotificationPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                onNotificationPermissionGranted()
+            }
+            shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                showRationaleDialog()
+            }
+            else -> {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun onNotificationPermissionResult(granted: Boolean) {
+        if (granted) {
+            onNotificationPermissionGranted()
+        } else if (!shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+            showSettingsDialog()
+        }
+        // else: denied without "Don't ask again" — do nothing
+        else{
+            //binding.cbReminder.isChecked = false
+        }
+    }
+
+    private fun onNotificationPermissionGranted() {
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun showRationaleDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Permission Required")
+            .setMessage("This app needs notification permission to remind you about your habits.")
+            .setPositiveButton("Grant") { _, _ ->
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                //binding.cbReminder.isChecked = false
+            }
+            .show()
+    }
+
+    private fun showSettingsDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Permission Required")
+            .setMessage("Notification permission was permanently denied. Please enable it in App Settings.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                try {
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).also { intent ->
+                        intent.data = Uri.fromParts("package", requireActivity().packageName, null)
+                        startActivity(intent)
+                    }
+                } catch (e: ActivityNotFoundException) {
+                    Toast.makeText(requireContext(), "Cannot open settings", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                //binding.cbReminder.isChecked = false
+            }
+            .show()
     }
 
 }

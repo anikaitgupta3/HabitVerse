@@ -12,7 +12,7 @@ import com.example.habitverse.data.db.Habit
 import com.example.habitverse.databinding.ListItemBinding
 import com.example.habitverse.domain.HabitDomainModel
 
-class MainScreenAdapter(/*habits: List<Habit>,*/private val onHabitClick: (HabitDomainModel) -> Unit): ListAdapter<HabitDomainModel,HabitViewHolder> (
+class MainScreenAdapter(/*habits: List<Habit>,*/private val onHabitClick: (HabitDomainModel) -> Unit, private val onCheckboxCheckedChanged:(HabitDomainModel, Boolean)-> Unit): ListAdapter<HabitDomainModel,HabitViewHolder> (
     object : DiffUtil.ItemCallback<HabitDomainModel>() {
         override fun areItemsTheSame(
             oldItem: HabitDomainModel,
@@ -31,7 +31,7 @@ class MainScreenAdapter(/*habits: List<Habit>,*/private val onHabitClick: (Habit
         //TODO("Not yet implemented")
         val layoutInflater = LayoutInflater.from(parent.context)
         val binding: ListItemBinding = DataBindingUtil.inflate(layoutInflater, R.layout.list_item, parent, false)
-        return HabitViewHolder(binding,onHabitClick)
+        return HabitViewHolder(binding,onHabitClick,onCheckboxCheckedChanged)
     }
 
     override fun onBindViewHolder(holder: HabitViewHolder, position: Int) {
@@ -46,15 +46,28 @@ class MainScreenAdapter(/*habits: List<Habit>,*/private val onHabitClick: (Habit
 
 class HabitViewHolder(
     private val binding: ListItemBinding,
-    private val onHabitClick: (HabitDomainModel) -> Unit
+    private val onHabitClick: (HabitDomainModel) -> Unit,
+    private val onCheckboxCheckedChanged:(HabitDomainModel, Boolean)-> Unit
 ) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(habit: HabitDomainModel) {
-        binding.tv1.text = habit.habitName
-        binding.tv3.text = habit.habitFrequency.frequency
+        binding.tvHabitTitle.text = habit.habitName
+        binding.tvHabitFrequency.text = habit.habitFrequency.frequency
+        binding.tvHabitTime.text = habit.timeToShowNotification.toString()
+        // 1. Clear the listener BEFORE setting the state
+        binding.cbHabitStatus.setOnCheckedChangeListener(null)
+        binding.cbHabitStatus.isChecked = habit.isCompleted
 
         itemView.setOnClickListener {
             onHabitClick(habit)
+        }
+        binding.cbHabitStatus.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked){
+                onCheckboxCheckedChanged(habit,true)
+            }
+            else{
+                onCheckboxCheckedChanged(habit,false)
+            }
         }
     }
 }
