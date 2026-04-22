@@ -1,19 +1,26 @@
 package com.example.habitverse.ui
 
+import android.app.Notification
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
+import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.example.habitverse.NotificationUtils
 import com.example.habitverse.NotificationUtils.CHANNEL_ID
+import com.example.habitverse.NotificationUtils.NOTIFICATION_ID_EXPEDITED
 import com.example.habitverse.R
 import com.example.habitverse.data.db.Habit
 import com.example.habitverse.data.db.HabitDao
@@ -24,12 +31,19 @@ import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 // --- Hilt-Enabled Recursive Worker ---
-@HiltWorker
+/*@HiltWorker
 class HabitReminderWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val habitUseCase: HabitUseCase // Direct DAO access or via Repository
 ) : CoroutineWorker(context, params) {
+    // 1. Override this for Android 11 and below support
+//    override suspend fun getForegroundInfo(): ForegroundInfo {
+//        return ForegroundInfo(
+//            NOTIFICATION_ID_EXPEDITED, // A unique constant Int, e.g., 999
+//            createExpeditedNotification()
+//        )
+//    }
 
     override suspend fun doWork(): Result {
         val habitId = inputData.getLong("HABIT_ID", -1L)
@@ -62,6 +76,7 @@ class HabitReminderWorker @AssistedInject constructor(
         val nextDelay = NotificationUtils.calculateDelayForTomorrow(data.habit.timeToShowNotification)
         val nextRequest = OneTimeWorkRequestBuilder<HabitReminderWorker>()
             .setInitialDelay(nextDelay, TimeUnit.MINUTES)
+            //.setExpedited(RUN_AS_NON_EXPEDITED_WORK_REQUEST) // CRITICAL
             .setInputData(workDataOf("HABIT_ID" to habitId))
             .addTag("habit_$habitId")
             .build()
@@ -90,4 +105,24 @@ class HabitReminderWorker @AssistedInject constructor(
         notificationManager.notify(habit.id.toInt(), notificationBuilder.build())
 
     }
-}
+//    private fun createExpeditedNotification(): Notification {
+//        // Ensuring a silent channel for the "Sync/Check" phase
+//        val silentChannelId = "background_sync_channel"
+//
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            val channel = NotificationChannel(
+//                silentChannelId,
+//                "System Processing",
+//                NotificationManager.IMPORTANCE_LOW // Silent!
+//            )
+//            val manager = applicationContext.getSystemService(NotificationManager::class.java)
+//            manager.createNotificationChannel(channel)
+//        }
+//
+//        return NotificationCompat.Builder(applicationContext, silentChannelId)
+//            .setSmallIcon(R.drawable.outline_notifications_24)
+//            .setContentTitle("Processing Habit") // Keep it brief
+//            .setPriority(NotificationCompat.PRIORITY_LOW)
+//            .build()
+//    }
+}*/

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.habitverse.HabitVerseApp
@@ -18,6 +19,8 @@ import com.example.habitverse.data.db.Habit
 import com.example.habitverse.data.db.HabitLog
 import com.example.habitverse.di.HabitSync
 import com.example.habitverse.di.LogSync
+import com.example.habitverse.domain.AlarmItem
+import com.example.habitverse.domain.AlarmScheduler
 import com.example.habitverse.domain.AuthRepository
 import com.example.habitverse.domain.HabitDomainModel
 import com.example.habitverse.domain.HabitRepository
@@ -91,7 +94,8 @@ data class HabitUiState(
 
 @HiltViewModel
 class HabitViewModel @Inject constructor(
-    private val habitUseCase: HabitUseCase, @HabitSync private val syncManager: SyncManager, @LogSync private val logSyncManager: SyncManager, private val authRepository: AuthRepository, private val workManager: WorkManager
+    private val habitUseCase: HabitUseCase, @HabitSync private val syncManager: SyncManager, @LogSync private val logSyncManager: SyncManager, private val authRepository: AuthRepository, private val workManager: WorkManager,
+    private val alarmScheduler: AlarmScheduler
 ) : ViewModel() {
 
     private val _currentEditHabit = MutableStateFlow<HabitDomainModel?>(null)
@@ -161,18 +165,21 @@ class HabitViewModel @Inject constructor(
 
     fun addHabit(habit: HabitDomainModel) = viewModelScope.launch {
         val id = habitUseCase.insertHabit(habit)
-        handleWorkManagement(habit.copy(id = id),isDeleted = false)
+        //handleWorkManagement(habit.copy(id = id),isDeleted = false)
+        handleAlarmManagement(habit.copy(id = id),isDeleted = false)
 
     }
 
     fun deleteHabit(habit: HabitDomainModel) = viewModelScope.launch {
         habitUseCase.deleteHabit(habit)
-        handleWorkManagement(habit,isDeleted = true)
+        //handleWorkManagement(habit,isDeleted = true)
+        handleAlarmManagement(habit,isDeleted = true)
     }
 
     fun updateHabit(habit: HabitDomainModel) = viewModelScope.launch {
         habitUseCase.editHabit(habit)
-        handleWorkManagement(habit,isDeleted = false)
+        //handleWorkManagement(habit,isDeleted = false)
+        handleAlarmManagement(habit,isDeleted = false)
     }
     fun updateCurrentFrequencyFragment(frequency: Frequency){
         _selectedFrequency.value = frequency
@@ -195,19 +202,19 @@ class HabitViewModel @Inject constructor(
      fun clearRoomAndUpdateRoom(){
          viewModelScope.launch {
              syncManager.cleanRoomAndUpdateRoom()
+             scheduleNotifications()
 
          }
          viewModelScope.launch {
              logSyncManager.cleanRoomAndUpdateRoom()
-             scheduleWorkManagerNotifications()
-
-
          }
+
     }
-    fun scheduleWorkManagerNotifications(){
-        val listOfHabits = habitUiState.value.listOfHabits
+    suspend fun scheduleNotifications(){
+        //val listOfHabits = habitUiState.value.listOfHabits
+        val listOfHabits = habitUseCase.getAllHabitsWithLogs().first().map { it.habit }
         listOfHabits.forEach {
-            handleWorkManagement(it,isDeleted = false)
+            handleAlarmManagement(it.toDomain(false),isDeleted = false)
         }
 
     }
@@ -218,7 +225,8 @@ class HabitViewModel @Inject constructor(
         viewModelScope.launch {
             logSyncManager.cleanRoom()
         }
-        workManager.cancelAllWork()
+        //workManager.cancelAllWork()
+        deleteAllAlarms()
     }
      fun createAccount(emailId: String, password: String) {
         viewModelScope.launch {
@@ -268,24 +276,42 @@ class HabitViewModel @Inject constructor(
         }
     }*/
     // --- WorkManager Control Logic ---
-    fun handleWorkManagement(habit: HabitDomainModel,isDeleted: Boolean) {
+//    fun handleWorkManagement(habit: HabitDomainModel,isDeleted: Boolean) {
+//        if (habit.showNotification && !isDeleted) {
+//            val delay = NotificationUtils.calculateInitialDelay(habit.timeToShowNotification)
+//            val request = OneTimeWorkRequestBuilder<HabitReminderWorker>()
+//                .setInitialDelay(delay, TimeUnit.MINUTES)
+//                //.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST) // CRITICAL
+//                .setInputData(workDataOf("HABIT_ID" to habit.id))
+//                .addTag("habit_${habit.id}")
+//                .build()
+//
+//            workManager.enqueueUniqueWork(
+//                "habit_reminder_${habit.id}",
+//                ExistingWorkPolicy.REPLACE,
+//                request
+//            )
+//        } else {
+//            workManager.cancelUniqueWork("habit_reminder_${habit.id}")
+//        }
+//    }
+    fun handleAlarmManagement(habit: HabitDomainModel,isDeleted: Boolean) {
         if (habit.showNotification && !isDeleted) {
-            val delay = NotificationUtils.calculateInitialDelay(habit.timeToShowNotification)
-            val request = OneTimeWorkRequestBuilder<HabitReminderWorker>()
-                .setInitialDelay(delay, TimeUnit.MINUTES)
-                .setInputData(workDataOf("HABIT_ID" to habit.id))
-                .addTag("habit_${habit.id}")
-                .build()
-
-            workManager.enqueueUniqueWork(
-                "habit_reminder_${habit.id}",
-                ExistingWorkPolicy.REPLACE,
-                request
-            )
+            viewModelScope.launch {
+                alarmScheduler.schedule(AlarmItem(habit.id!!))
+            }
         } else {
-            workManager.cancelUniqueWork("habit_reminder_${habit.id}")
+            viewModelScope.launch {
+                alarmScheduler.cancel(AlarmItem(habit.id!!))
+            }
         }
     }
+    fun deleteAllAlarms(){
+        viewModelScope.launch {
+            alarmScheduler.cancelAll(habitUiState.value.listOfHabits.map { AlarmItem(it.id!!) })
+        }
+    }
+
 
     fun toggleCompletion(habitId: Long, isCurrentlyDone: Boolean) {
         viewModelScope.launch {

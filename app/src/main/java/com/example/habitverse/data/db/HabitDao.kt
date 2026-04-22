@@ -24,7 +24,7 @@ interface HabitDao {
     fun getAllHabits(): Flow<List<Habit>>
 
     @Query("select* from habits where id = :id")
-    fun getHabitsById(id: Int): Flow<Habit>
+    fun getHabitsById(id: Long): Flow<Habit>
 
     @Query("select* from habits where syncState != 'SUCCESS'")
     suspend fun getAllPendingAndFailedHabits():List<Habit>
@@ -67,6 +67,8 @@ interface HabitDao {
 
     @Query("DELETE FROM habit_logs")
     suspend fun deleteAllHabitLogs()
+
+
 
 
 }

@@ -9,6 +9,7 @@ import java.time.LocalTime
 // --- Utility for Time Math ---
 object NotificationUtils {
     val CHANNEL_ID = "notification_channel"
+    val NOTIFICATION_ID_EXPEDITED = 999
     fun calculateInitialDelay(targetTime: LocalTime): Long {
         val now = LocalDateTime.now()
         val targetToday = LocalDateTime.of(LocalDate.now(), targetTime)

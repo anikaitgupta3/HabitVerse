@@ -1,13 +1,16 @@
 package com.example.habitverse.ui
 
 import android.Manifest
+import android.app.AlarmManager
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -75,7 +78,7 @@ class AddHabitFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         //return inflater.inflate(R.layout.fragment_add_habit, container, false)
-        binding= DataBindingUtil.inflate(inflater, R.layout.fragment_add_habit, container, false)
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_add_habit, container, false)
         return binding.root
     }
 
@@ -143,9 +146,12 @@ class AddHabitFragment : Fragment() {
             }
         }
         binding.cbReminder.setOnCheckedChangeListener { _, isChecked ->
-            if(isChecked){
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (isChecked) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     checkNotificationPermission()
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    checkScheduleExactAlarmPermission()
                 }
             }
         }
@@ -190,14 +196,22 @@ class AddHabitFragment : Fragment() {
         val frequency_values = resources.getStringArray(R.array.frequency_values)
         // create an array adapter and pass the required parameter
         // in our case pass the context, drop down layout , and array.
-        val arrayAdapter = ArrayAdapter(this.requireContext(), R.layout.dropdown_item, frequency_values)
+        val arrayAdapter =
+            ArrayAdapter(this.requireContext(), R.layout.dropdown_item, frequency_values)
         // get reference to the autocomplete text view
         val autocompleteTV = binding.autoCompleteTextView
         // set adapter to the autocomplete tv to the arrayAdapter
         autocompleteTV.setAdapter(arrayAdapter)
-        binding.autoCompleteTextView.setOnItemClickListener {_, _, position, _ ->
+        binding.autoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
             val selectedFrequency = Frequency.entries[position]
             habitViewModel.updateCurrentFrequencyFragment(selectedFrequency)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager =
+                requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (alarmManager.canScheduleExactAlarms()) {
+                onScheduleExactAlarmPermissionGranted()
+            }
         }
     }
 
@@ -220,12 +234,30 @@ class AddHabitFragment : Fragment() {
         habitViewModel.updateCurrentFrequencyFragmentToNull()
     }
 
-    fun clickOnCancelOrBackButton(navController: NavController){
+    fun clickOnCancelOrBackButton(navController: NavController) {
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
-    fun clickOnSaveButton(navController: NavController,habitName: String,habitFrequency: Frequency,isChecked: Boolean){
-        habitViewModel.addHabit(HabitDomainModel(habitName = habitName, habitFrequency = habitFrequency, remoteId = null, showNotification = isChecked, timeToShowNotification = LocalTime.of(habitViewModel.pickedTimeHour,habitViewModel.pickedTimeMinutes), isCompleted = false))
+
+    fun clickOnSaveButton(
+        navController: NavController,
+        habitName: String,
+        habitFrequency: Frequency,
+        isChecked: Boolean
+    ) {
+        habitViewModel.addHabit(
+            HabitDomainModel(
+                habitName = habitName,
+                habitFrequency = habitFrequency,
+                remoteId = null,
+                showNotification = isChecked,
+                timeToShowNotification = LocalTime.of(
+                    habitViewModel.pickedTimeHour,
+                    habitViewModel.pickedTimeMinutes
+                ),
+                isCompleted = false
+            )
+        )
         habitViewModel.updateCurrentFrequencyFragmentToNull()
         navController.navigateUp()
     }
@@ -266,9 +298,11 @@ class AddHabitFragment : Fragment() {
             ) == PackageManager.PERMISSION_GRANTED -> {
                 onNotificationPermissionGranted()
             }
+
             shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
                 showRationaleDialog()
             }
+
             else -> {
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
@@ -283,7 +317,7 @@ class AddHabitFragment : Fragment() {
             showSettingsDialog()
         }
         // else: denied without "Don't ask again" — do nothing
-        else{
+        else {
             binding.cbReminder.isChecked = false
         }
     }
@@ -317,12 +351,128 @@ class AddHabitFragment : Fragment() {
                         startActivity(intent)
                     }
                 } catch (e: ActivityNotFoundException) {
-                    Toast.makeText(requireContext(), "Cannot open settings", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Cannot open settings", Toast.LENGTH_LONG)
+                        .show()
                 }
             }
             .setNegativeButton("Cancel") { _, _ ->
                 binding.cbReminder.isChecked = false
             }
+            .show()
+    }
+//    @RequiresApi(Build.VERSION_CODES.S)
+//    private val scheduleExactAlarmPermissionLauncher =
+//        registerForActivityResult(
+//            ActivityResultContracts.RequestPermission(),
+//            ::onScheduleExactAlarmPermissionResult
+//        )
+//
+//    @RequiresApi(Build.VERSION_CODES.S)
+//    fun checkScheduleExactAlarmPermission() {
+//        when {
+//            ContextCompat.checkSelfPermission(
+//                requireContext(),
+//                Manifest.permission.SCHEDULE_EXACT_ALARM
+//            ) == PackageManager.PERMISSION_GRANTED -> {
+//                //onNotificationPermissionGranted()
+//                onScheduleExactAlarmPermissionGranted()
+//            }
+//            shouldShowRequestPermissionRationale(Manifest.permission.SCHEDULE_EXACT_ALARM) -> {
+//                //showRationaleDialog()
+//                showRationaleDialogForAlarmPermission()
+//            }
+//            else -> {
+//                //notificationPermissionLauncher.launch(Manifest.permission.SCHEDULE_EXACT_ALARM)
+//                scheduleExactAlarmPermissionLauncher.launch(Manifest.permission.SCHEDULE_EXACT_ALARM)
+//            }
+//        }
+//    }
+//
+//    @RequiresApi(Build.VERSION_CODES.S)
+//    private fun onScheduleExactAlarmPermissionResult(granted: Boolean) {
+//        if (granted) {
+//            onScheduleExactAlarmPermissionGranted()
+//        } else if (!shouldShowRequestPermissionRationale(Manifest.permission.SCHEDULE_EXACT_ALARM)) {
+//            showSettingsDialogForAlarmPermission()
+//        }
+//        // else: denied without "Don't ask again" — do nothing
+//        else{
+//            //binding.cbReminder.isChecked = false
+//        }
+//    }
+
+    private fun onScheduleExactAlarmPermissionGranted() {
+
+    }
+
+    //    @RequiresApi(Build.VERSION_CODES.S)
+//    private fun showRationaleDialogForAlarmPermission() {
+//        MaterialAlertDialogBuilder(requireContext())
+//            .setTitle("Permission Required")
+//            .setMessage("This app requires schedule exact alarm permission to remind you about your habits.")
+//            .setPositiveButton("Grant") { _, _ ->
+//                scheduleExactAlarmPermissionLauncher.launch(Manifest.permission.SCHEDULE_EXACT_ALARM)
+//            }
+//            .setNegativeButton("Cancel") { _, _ ->
+//                //binding.cbReminder.isChecked = false
+//            }
+//            .show()
+//    }
+//
+//    @RequiresApi(Build.VERSION_CODES.S)
+//    private fun showSettingsDialogForAlarmPermission() {
+//        MaterialAlertDialogBuilder(requireContext())
+//            .setTitle("Permission Required")
+//            .setMessage("Schedule exact alarm permission was permanently denied. Please enable it in App Settings.")
+//            .setPositiveButton("Open Settings") { _, _ ->
+//                try {
+////                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).also { intent ->
+////                        intent.data = Uri.fromParts("package", requireActivity().packageName, null)
+////                        startActivity(intent)
+////                    }
+//                    startActivity(Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+//                } catch (e: ActivityNotFoundException) {
+//                    Toast.makeText(requireContext(), "Cannot open settings", Toast.LENGTH_LONG).show()
+//                }
+//            }
+//            .setNegativeButton("Cancel") { _, _ ->
+//               // binding.cbReminder.isChecked = false
+//            }
+//            .show()
+//    }
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun checkScheduleExactAlarmPermission() {
+        val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (alarmManager.canScheduleExactAlarms()) {
+            // Permission already granted
+            onScheduleExactAlarmPermissionGranted()
+        } else {
+            // Can't request normally — must direct to settings
+            showRationaleDialogForAlarmPermission()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private fun showRationaleDialogForAlarmPermission() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Permission Required")
+            .setMessage("This app requires the exact alarm permission to remind you about your habits.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                try {
+                    Intent(
+                        Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                        Uri.fromParts(
+                            "package",
+                            requireActivity().packageName,
+                            null
+                        ) // ✅ pass package URI
+                    ).also { startActivity(it) }
+                } catch (e: ActivityNotFoundException) {
+                    Toast.makeText(requireContext(), "Cannot open settings", Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 }
