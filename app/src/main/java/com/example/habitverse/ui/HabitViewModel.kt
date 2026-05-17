@@ -11,12 +11,14 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.example.habitverse.BuildConfig
 import com.example.habitverse.HabitVerseApp
 import com.example.habitverse.NotificationUtils
 import com.example.habitverse.data.Frequency
 import com.example.habitverse.data.SyncState
 import com.example.habitverse.data.db.Habit
 import com.example.habitverse.data.db.HabitLog
+import com.example.habitverse.data.network.GeminiResult
 import com.example.habitverse.di.HabitSync
 import com.example.habitverse.di.LogSync
 import com.example.habitverse.domain.AlarmItem
@@ -29,6 +31,7 @@ import com.example.habitverse.domain.SyncManager
 import com.example.habitverse.toDomain
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -47,50 +50,23 @@ data class HabitUiState(
     val listOfHabits:List<HabitDomainModel> = listOf(),
     val currentEditHabit: HabitDomainModel? = null
 )
-/*class HabitViewModel(private val habitRepository: HabitRepository) : ViewModel() {
-    // TODO: Implement the ViewModel
-    private val _habitUiState = MutableStateFlow(HabitUiState())
-    val habitUiState = _habitUiState
-
-    fun getListOfHabits(){
-        viewModelScope.launch {
-            habitRepository.getAllHabits().collect { habits ->
-                _habitUiState.update { it.copy(listOfHabits = habits)
-                }
-            }
-        }
-    }
-    fun addHabit(habit: Habit){
-        viewModelScope.launch {
-            habitRepository.insertHabit(habit)
-        }
-    }
-    fun deleteHabit(habit: Habit){
-        viewModelScope.launch {
-            habitRepository.deleteHabit(habit)
-        }
-    }
-    fun updateHabit(habit: Habit){
-        viewModelScope.launch {
-            habitRepository.editHabit(habit)
-        }
-    }
-    fun updateCurrentEditHabit(habit: Habit){
-        _habitUiState.update { it.copy(currentEditHabit = habit)
-        }
-    }
-
-    companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = (this[APPLICATION_KEY] as HabitVerseApp)
-                val habitRepository = application.container.habitRepository
-                HabitViewModel(habitRepository = habitRepository)
-            }
-        }
-    }
-
-}*/
+data class HabitAnalyticsUiState(
+    //val logCountThisWeek: Long=0L,
+    //val logCountLastWeek: Long=0L,
+    //val habitCountThisWeek:Long=0L,
+    //val habitCountLastWeek:Long=0L,
+    val completionRateThisWeek:Double=0.0,
+    val completionRateLastWeek: Double = 0.0,
+    val trend: Double = 0.0,
+    val recoveryRate: Double=0.0,
+    val streakCount:Long =0L
+)
+sealed interface GeminiUiState {
+    object Idle : GeminiUiState
+    object Loading : GeminiUiState
+    data class Success(val data: String) : GeminiUiState
+    data class Error(val message: String) : GeminiUiState
+}
 
 @HiltViewModel
 class HabitViewModel @Inject constructor(
@@ -118,36 +94,24 @@ class HabitViewModel @Inject constructor(
 
     private val _registrationState = MutableStateFlow<RegistrationState>(RegistrationState.Idle)
     val registrationState = _registrationState.asStateFlow()
+    private val _forgotPasswordState = MutableStateFlow<ForgotPasswordState>(ForgotPasswordState.Idle)
+    val forgotPasswordState = _forgotPasswordState.asStateFlow()
 
-//    private val _pickedTimeHour = MutableStateFlow(10)
-//    val pickedTimeHour: StateFlow<Int> = _pickedTimeHour
-//
-//    private val _pickedTimeMinutes = MutableStateFlow(0)
-//    val pickedTimeMinutes: StateFlow<Int> = _pickedTimeMinutes
+    private val _deleteAccountState = MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
+    val deleteAccountState = _deleteAccountState.asStateFlow()
+    private val _geminiUiState = MutableStateFlow<GeminiUiState>(GeminiUiState.Idle)
+    val geminiUiState = _geminiUiState.asStateFlow()
+
     private var _pickedTimeHour: Int = 10
     val pickedTimeHour get() = _pickedTimeHour
 
     private var _pickedTimeMinutes: Int = 0
-    val pickedTimeMinutes get() = _pickedTimeMinutes  // ❌ was _pickedTimeHour, fix this typo
+    val pickedTimeMinutes get() = _pickedTimeMinutes  // ❌ was _pickedTimeHour, fix this
+
+    private var tipsJob: Job? = null
+
 
     private val todayDate = LocalDate.now().toString()
-
-
-    /*val habitUiState: StateFlow<HabitUiState> =
-        combine(
-            habitUseCase.getAllHabits(),
-            _currentEditHabit
-        ) { habits, currentEditHabit ->
-            HabitUiState(
-                listOfHabits = habits,
-                currentEditHabit = currentEditHabit
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = HabitUiState()
-        )*/
-    // Combined UI State
     val habitUiState: StateFlow<HabitUiState> = combine(
         habitUseCase.getAllHabitsWithLogs(),
         _currentEditHabit
@@ -162,6 +126,70 @@ class HabitViewModel @Inject constructor(
         }
         HabitUiState(listOfHabits = mapped, currentEditHabit = currentEdit)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitUiState())
+
+//    val analyticsUiState:StateFlow<HabitAnalyticsUiState> = combine(
+//        habitUseCase.getCountOfLogsCompletedIn7Days(LocalDate.now().toString(), LocalDate.now().minusDays(6).toString()),
+//        habitUseCase.getCountOfLogsCompletedInLast7Days(LocalDate.now().minusDays(7).toString(), LocalDate.now().minusDays(13).toString()),
+//        habitUseCase.getTotalPossibleCompletionsInLast7Days(LocalDate.now().toString()),
+//        habitUseCase.getTotalPossibleCompletionsInLast7To14Days(LocalDate.now().minusDays(7).toString()),
+//        habitUseCase.getRecoveryRate(),
+//        habitUseCase.calculateNumberOfHabitsWithStreak()
+//    ){logsCurr,logsPrev,totalCurr,totalPrev,recoveryRate,streakCount->
+//        HabitAnalyticsUiState(logCountThisWeek = logsCurr, logCountLastWeek = logsPrev, habitCountThisWeek = totalCurr, habitCountLastWeek = totalPrev, recoveryRate = recoveryRate, streakCount = streakCount)
+//    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitAnalyticsUiState())
+//val analyticsUiState: StateFlow<HabitAnalyticsUiState> = combine(
+//    combine(
+//        habitUseCase.getCountOfLogsCompletedIn7Days(
+//            LocalDate.now().toString(),
+//            LocalDate.now().minusDays(6).toString()
+//        ),
+//        habitUseCase.getCountOfLogsCompletedInLast7Days(
+//            LocalDate.now().minusDays(7).toString(),
+//            LocalDate.now().minusDays(13).toString()
+//        ),
+//        habitUseCase.getTotalPossibleCompletionsInLast7Days(
+//            LocalDate.now().toString()
+//        )
+//    ) { logsCurr, logsPrev, totalCurr ->
+//        Triple(logsCurr, logsPrev, totalCurr)
+//    },
+//    combine(
+//        habitUseCase.getTotalPossibleCompletionsInLast7To14Days(
+//            LocalDate.now().minusDays(7).toString()
+//        ),
+//        habitUseCase.getRecoveryRate(),
+//        habitUseCase.calculateNumberOfHabitsWithStreak()
+//    ) { totalPrev, recoveryRate, streakCount ->
+//        Triple(totalPrev, recoveryRate, streakCount)
+//    }
+//) { (logsCurr, logsPrev, totalCurr), (totalPrev, recoveryRate, streakCount) ->
+//    HabitAnalyticsUiState(
+//        logCountThisWeek = logsCurr,
+//        logCountLastWeek = logsPrev,
+//        habitCountThisWeek = totalCurr,
+//        habitCountLastWeek = totalPrev,
+//        recoveryRate = recoveryRate,
+//        streakCount = streakCount
+//    )
+//}.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitAnalyticsUiState())
+
+    val analyticsUiState: StateFlow<HabitAnalyticsUiState> = combine(
+        habitUseCase.getAnalyticsData(),
+        habitUseCase.getRecoveryRate(),
+        habitUseCase.calculateNumberOfHabitsWithStreak()
+    ) { analyticsData, recoveryRate, streakCount ->
+        HabitAnalyticsUiState(
+//            logCountThisWeek = analyticsData.logCountThisWeek,
+//            logCountLastWeek = analyticsData.logCountLastWeek,
+//            habitCountThisWeek = analyticsData.totalPossibleThisWeek,
+//            habitCountLastWeek = analyticsData.totalPossibleLastWeek,
+            completionRateThisWeek = analyticsData.completionRateThisWeek,
+            completionRateLastWeek = analyticsData.completionRateLastWeek,
+            trend = analyticsData.trend,
+            recoveryRate = recoveryRate,
+            streakCount = streakCount
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitAnalyticsUiState())
 
     fun addHabit(habit: HabitDomainModel) = viewModelScope.launch {
         val id = habitUseCase.insertHabit(habit)
@@ -269,32 +297,7 @@ class HabitViewModel @Inject constructor(
         _pickedTimeHour = hour
         _pickedTimeMinutes = minutes
     }
-    /*fun updateCurrentEditHabitById(id:Int){
-        viewModelScope.launch {
-            val habit=habitRepository.getHabitsById(id).first()
-            _currentEditHabit.value=habit
-        }
-    }*/
-    // --- WorkManager Control Logic ---
-//    fun handleWorkManagement(habit: HabitDomainModel,isDeleted: Boolean) {
-//        if (habit.showNotification && !isDeleted) {
-//            val delay = NotificationUtils.calculateInitialDelay(habit.timeToShowNotification)
-//            val request = OneTimeWorkRequestBuilder<HabitReminderWorker>()
-//                .setInitialDelay(delay, TimeUnit.MINUTES)
-//                //.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST) // CRITICAL
-//                .setInputData(workDataOf("HABIT_ID" to habit.id))
-//                .addTag("habit_${habit.id}")
-//                .build()
-//
-//            workManager.enqueueUniqueWork(
-//                "habit_reminder_${habit.id}",
-//                ExistingWorkPolicy.REPLACE,
-//                request
-//            )
-//        } else {
-//            workManager.cancelUniqueWork("habit_reminder_${habit.id}")
-//        }
-//    }
+
     fun handleAlarmManagement(habit: HabitDomainModel,isDeleted: Boolean) {
         if (habit.showNotification && !isDeleted) {
             viewModelScope.launch {
@@ -312,6 +315,58 @@ class HabitViewModel @Inject constructor(
         }
     }
 
+    fun getTipsForHabitImprovement(habitName: String) {
+        tipsJob?.cancel()
+        tipsJob = viewModelScope.launch {
+            _geminiUiState.value = GeminiUiState.Loading
+            val result = habitUseCase.getTipsForHabitImprovement(BuildConfig.API_KEY, habitName)
+            _geminiUiState.value = when (result) {
+                is GeminiResult.Success -> GeminiUiState.Success(result.output)
+                is GeminiResult.Error -> GeminiUiState.Error(result.message)
+                is GeminiResult.Loading -> GeminiUiState.Loading
+            }
+        }
+    }
+    fun sendPasswordResetEmail(email: String) {
+        viewModelScope.launch {
+            try {
+                authRepository.sendPasswordResetMail(email)
+                _forgotPasswordState.value = ForgotPasswordState.Success
+
+            } catch (e: Exception) {
+                _forgotPasswordState.value =
+                    ForgotPasswordState.Error(e.message ?: "Error sending reset email")
+            }
+        }
+    }
+
+    fun updateForgotPasswordStateToIdle() {
+        _forgotPasswordState.value = ForgotPasswordState.Idle
+    }
+
+    fun resetGeminiState() {
+        _geminiUiState.value = GeminiUiState.Idle
+    }
+    fun deleteAccount(){
+        viewModelScope.launch {
+            try {
+                val result = syncManager.deleteAccount()
+                if (result.isSuccess) {
+                    authRepository.deleteAccount()
+                    authRepository.logout()
+                    _deleteAccountState.value = DeleteAccountState.Success
+                } else {
+                    _deleteAccountState.value = DeleteAccountState.Error(result.exceptionOrNull()?.message ?: "Failed to delete account data")
+                }
+            } catch (e: Exception) {
+                _deleteAccountState.value = DeleteAccountState.Error(e.message ?: "An unexpected error occurred")
+            }
+        }
+    }
+
+    fun updateDeleteAccountStateToIdle() {
+        _deleteAccountState.value = DeleteAccountState.Idle
+    }
 
     fun toggleCompletion(habitId: Long, isCurrentlyDone: Boolean) {
         viewModelScope.launch {

@@ -10,5 +10,6 @@ data class HabitDomainModel(
     val remoteId: String?,
     val showNotification: Boolean,
     val timeToShowNotification: LocalTime,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val createdAt: String
 )

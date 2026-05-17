@@ -6,4 +6,8 @@ interface AuthRepository {
     suspend fun logout()
     fun checkLoggedIn(): Boolean
     suspend fun getUserId(): String?
+    suspend fun sendPasswordResetMail(email: String)
+
+    suspend fun deleteAccount()
+
 }

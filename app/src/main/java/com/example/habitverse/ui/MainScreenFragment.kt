@@ -158,6 +158,14 @@ class MainScreenFragment : Fragment(), MenuProvider {
                 habitViewModel.cleanRoom()
                 true
             }
+            R.id.action_analytics->{
+                findNavController().navigate(R.id.analyticsFragment)
+                true
+            }
+            R.id.action_settings->{
+                findNavController().navigate(R.id.settingsFragment)
+                true
+            }
 
             else -> false
         }

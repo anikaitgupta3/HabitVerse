@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,8 +7,15 @@ plugins {
     id("com.google.dagger.hilt.android")
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.compose.compiler)
+    kotlin("plugin.serialization") version "2.3.0"
 }
-
+val localProps = Properties()
+val localPropertiesFile = File(rootProject.rootDir,"local.properties")
+if (localPropertiesFile.exists() && localPropertiesFile.isFile) {
+    localPropertiesFile.inputStream().use {
+        localProps.load(it)
+    }
+}
 android {
     namespace = "com.example.habitverse"
     compileSdk {
@@ -31,6 +40,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "API_KEY", localProps.getProperty("API_KEY"))// IF any
+        }
+        debug {
+            buildConfigField("String", "API_KEY", localProps.getProperty("API_KEY"))// IF any
         }
     }
     compileOptions {
@@ -45,6 +58,7 @@ android {
         dataBinding = true
         viewBinding = true
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -102,5 +116,11 @@ dependencies {
 
     // Standard WorkManager dependency
     implementation("androidx.work:work-runtime-ktx:2.11.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation ("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0")
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
+    // Source: https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor
+    implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
 
 }

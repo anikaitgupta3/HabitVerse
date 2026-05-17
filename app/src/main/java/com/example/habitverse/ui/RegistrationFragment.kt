@@ -8,7 +8,9 @@ import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.habitverse.R
 import com.example.habitverse.databinding.FragmentLoginBinding
@@ -44,40 +46,41 @@ class RegistrationFragment : Fragment() {
         binding.btnLogin.setOnClickListener {
             findNavController().navigate(R.id.loginFragment)
         }
+        binding.toolbarReg.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
         binding.btnRegister.setOnClickListener {
             if (!binding.etRegEmail.text.isNullOrEmpty() && !binding.etRegPassword.text.isNullOrEmpty()) {
-
                 habitViewModel.createAccount(
-                    binding.etRegEmail.text.toString(),
-                    binding.etRegPassword.text.toString()
+                    binding.etRegEmail.text.toString(), binding.etRegPassword.text.toString()
                 )
-                viewLifecycleOwner.lifecycleScope.launch {
-
-                    habitViewModel.registrationState.collect { state ->
-                        when (state) {
-                            is RegistrationState.Success -> {
-                                findNavController().navigate(R.id.loginFragment)
-                                habitViewModel.updateRegistrationStateToIdle()
-                            }
-
-                            is RegistrationState.Error -> {
-                                Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT)
-                                    .show()
-                                habitViewModel.updateRegistrationStateToIdle()
-                            }
-
-                            else -> {}
-                        }
-                    }
-                }
             } else {
                 Toast.makeText(
-                    requireContext(),
-                    "Please enter email and password",
-                    Toast.LENGTH_SHORT
+                    requireContext(), "Please enter email and password", Toast.LENGTH_SHORT
                 ).show()
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                habitViewModel.registrationState.collect { state ->
+                    when (state) {
+                        is RegistrationState.Success -> {
+                            findNavController().navigate(R.id.loginFragment)
+                            habitViewModel.updateRegistrationStateToIdle()
+                        }
 
+                        is RegistrationState.Error -> {
+                            Toast.makeText(
+                                requireContext(), state.message, Toast.LENGTH_SHORT
+                            ).show()
+                            habitViewModel.updateRegistrationStateToIdle()
+                        }
+
+                        else -> {}
+                    }
+                }
+            }
+        }
     }
+
 }

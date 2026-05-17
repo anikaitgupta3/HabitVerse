@@ -44,4 +44,16 @@ class FirebaseRemoteDataSource(private val firestore: FirebaseFirestore) : Remot
         return mappedHabit
     }
 
+    override suspend fun deleteAccount(userId: String) {
+        val habits = firestore.collection("users").document(userId).collection("habits").get().await()
+        for (habit in habits) {
+            habit.reference.delete().await()
+        }
+        val logs = firestore.collection("users").document(userId).collection("logs").get().await()
+        for (log in logs) {
+            log.reference.delete().await()
+        }
+        firestore.collection("users").document(userId).delete().await()
+    }
+
 }

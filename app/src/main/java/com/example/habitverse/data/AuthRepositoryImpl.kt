@@ -36,4 +36,12 @@ class AuthRepositoryImpl(private val firebaseAuth: FirebaseAuth): AuthRepository
         //TODO("Not yet implemented")
         return firebaseAuth.currentUser?.uid
     }
+
+    override suspend fun sendPasswordResetMail(email: String) {
+        firebaseAuth.sendPasswordResetEmail(email).await()
+    }
+
+    override suspend fun deleteAccount() {
+        firebaseAuth.currentUser?.delete()?.await()
+    }
 }

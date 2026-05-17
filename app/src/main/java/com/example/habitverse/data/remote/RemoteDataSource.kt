@@ -9,4 +9,6 @@ interface RemoteDataSource {
     suspend fun getAllHabits(userId: String): List<HabitDto>
     suspend fun getHabitById(id: String,userId: String): HabitDto?
 
+    suspend fun deleteAccount(userId: String)
+
 }

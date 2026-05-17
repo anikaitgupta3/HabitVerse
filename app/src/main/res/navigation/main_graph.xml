@@ -18,6 +18,12 @@
         <action
             android:id="@+id/action_main_to_edit"
             app:destination="@id/editHabitFragment" />
+        <action
+            android:id="@+id/action_mainScreenFragment_to_analyticsFragment"
+            app:destination="@id/analyticsFragment" />
+        <action
+            android:id="@+id/action_mainScreenFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
 
     <fragment
@@ -30,6 +36,25 @@
         android:id="@+id/editHabitFragment"
         android:name="com.example.habitverse.ui.EditHabitFragment"
         android:label="Edit Habit"
-        tools:layout="@layout/fragment_edit_habit" />
+        tools:layout="@layout/fragment_edit_habit" >
+        <action
+            android:id="@+id/action_editHabitFragment_to_tipsFragment"
+            app:destination="@id/tipsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/analyticsFragment"
+        android:name="com.example.habitverse.ui.AnalyticsFragment"
+        android:label="fragment_analytics"
+        tools:layout="@layout/fragment_analytics" />
+    <fragment
+        android:id="@+id/tipsFragment"
+        android:name="com.example.habitverse.ui.TipsFragment"
+        android:label="fragment_tips"
+        tools:layout="@layout/fragment_tips" />
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.habitverse.ui.SettingsFragment"
+        android:label="fragment_settings"
+        tools:layout="@layout/fragment_settings" />
 
 </navigation>

@@ -43,6 +43,22 @@ class SyncManagerImpl @Inject constructor(
     override suspend fun cleanRoom(){
         habitDao.deleteAllHabits()
     }
+
+    override suspend fun deleteAccount(): Result<Unit> {
+        try{
+            val currentUserId = authRepository.getUserId()
+            if (currentUserId != null) {
+                remoteDataSource.deleteAccount(currentUserId)
+                habitDao.deleteAllHabits()
+                //authRepository.logout()
+            }
+            return Result.success(Unit)
+        }catch (e: Exception){
+            Log.e("SYNC_ERROR", "Failed to delete account: ${e.message}", e)
+            return Result.failure(e)
+        }
+    }
+
     private suspend fun syncSingleHabit(habit: Habit) {
         val currentUserId = authRepository.getUserId()
         if (habit.isDeleted) {

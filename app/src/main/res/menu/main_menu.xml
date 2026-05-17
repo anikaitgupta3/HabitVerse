@@ -6,4 +6,14 @@
         app:showAsAction="never"
         android:title="Logout">
     </item>
+    <item
+        android:id="@+id/action_analytics"
+        app:showAsAction="never"
+        android:title="Analytics">
+    </item>
+    <item
+        android:id="@+id/action_settings"
+        app:showAsAction="never"
+        android:title="Settings">
+    </item>
 </menu>

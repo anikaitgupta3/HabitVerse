@@ -14,6 +14,9 @@
         <action
             android:id="@+id/action_login_to_registration"
             app:destination="@id/registrationFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_forgotPasswordFragment"
+            app:destination="@id/forgotPasswordFragment" />
     </fragment>
 
     <fragment
@@ -21,5 +24,10 @@
         android:name="com.example.habitverse.ui.RegistrationFragment"
         android:label="Register"
         tools:layout="@layout/fragment_registration" />
+    <fragment
+        android:id="@+id/forgotPasswordFragment"
+        android:name="com.example.habitverse.ui.ForgotPasswordFragment"
+        android:label="fragment_forgot_password"
+        tools:layout="@layout/fragment_forgot_password" />
 
 </navigation>

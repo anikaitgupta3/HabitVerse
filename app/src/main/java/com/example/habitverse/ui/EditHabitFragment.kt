@@ -86,75 +86,67 @@ class EditHabitFragment : Fragment() {
         //val id = arguments?.getInt("Key")
         //habitViewModel.updateCurrentEditHabitById(id!!)
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                //In case user selected some frequency and rotated screen
-                //Log.d("TAG1",habitViewModel.selectedFrequency.first().toString())
-                //Log.d("TAG2",habitViewModel.habitUiState.first().currentEditHabit.toString())
 
-                if (habitViewModel.selectedFrequency.first() != null) {
-                    val frequencyValue = habitViewModel.selectedFrequency.first()!!.frequency
-                    if (binding.autoCompleteTextView.text.toString() != frequencyValue) {
-                        binding.autoCompleteTextView.setText(frequencyValue, false)
-                    }
+        //In case user selected some frequency and rotated screen
+        //Log.d("TAG1",habitViewModel.selectedFrequency.first().toString())
+        //Log.d("TAG2",habitViewModel.habitUiState.first().currentEditHabit.toString())
 
-                } //In case screen just open on click of recyclerview item
-                else {
-                    val uiState = habitViewModel.habitUiState.first()
-                    binding.et1.setText(uiState.currentEditHabit!!.habitName)
-                    binding.autoCompleteTextView.setText(
-                        uiState.currentEditHabit.habitFrequency.frequency,
-                        false
-                    )
-                    if (uiState.currentEditHabit.showNotification && verifyNotificationPermissionIsThere()) {
-                        binding.cbReminder.isChecked = true
-                    } else {
-                        binding.cbReminder.isChecked = false
-                    }
-                    habitViewModel.updateCurrentFrequencyFragment(uiState.currentEditHabit.habitFrequency)
-                    habitViewModel.setPickedTime(
-                        uiState.currentEditHabit.timeToShowNotification.hour,
-                        uiState.currentEditHabit.timeToShowNotification.minute
-                    )
-                }
+        if (habitViewModel.selectedFrequency.value != null) {
+            val frequencyValue = habitViewModel.selectedFrequency.value!!.frequency
+            if (binding.autoCompleteTextView.text.toString() != frequencyValue) {
+                binding.autoCompleteTextView.setText(frequencyValue, false)
             }
+
+        } //In case screen just open on click of recyclerview item
+        else {
+            val uiState = habitViewModel.habitUiState.value
+            binding.et1.setText(uiState.currentEditHabit!!.habitName)
+            binding.autoCompleteTextView.setText(
+                uiState.currentEditHabit.habitFrequency.frequency,
+                false
+            )
+            if (uiState.currentEditHabit.showNotification && verifyNotificationPermissionIsThere()) {
+                binding.cbReminder.isChecked = true
+            } else {
+                binding.cbReminder.isChecked = false
+            }
+            habitViewModel.updateCurrentFrequencyFragment(uiState.currentEditHabit.habitFrequency)
+            habitViewModel.setPickedTime(
+                uiState.currentEditHabit.timeToShowNotification.hour,
+                uiState.currentEditHabit.timeToShowNotification.minute
+            )
         }
         binding.toolbar.setNavigationOnClickListener {
             clickOnBackButton(navController)
         }
         binding.bt1.setOnClickListener {
             //clickOnCancelOrBackButton(navController)
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    val uiState = habitViewModel.habitUiState.first()
-                    clickDeleteButton(navController, uiState.currentEditHabit!!)
-                }
-            }
+            val uiState = habitViewModel.habitUiState.value
+            clickDeleteButton(navController, uiState.currentEditHabit!!)
         }
 
         binding.bt2.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    if (!binding.et1.text.isNullOrEmpty() && habitViewModel.selectedFrequency.first() != null) {
-                        val uiState = habitViewModel.habitUiState.first()
-                        clickOnSaveButton(
-                            navController,
-                            binding.et1.text.toString(),
-                            habitViewModel.selectedFrequency.first()!!,
-                            uiState.currentEditHabit!!.id!!,
-                            uiState.currentEditHabit.remoteId,
-                            binding.cbReminder.isChecked,
-                            uiState.currentEditHabit.isCompleted
-                        )
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Please enter name and frequency",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+
+            if (!binding.et1.text.isNullOrEmpty() && habitViewModel.selectedFrequency.value != null) {
+                val uiState = habitViewModel.habitUiState.value
+                clickOnSaveButton(
+                    navController,
+                    binding.et1.text.toString(),
+                    habitViewModel.selectedFrequency.value!!,
+                    uiState.currentEditHabit!!.id!!,
+                    uiState.currentEditHabit.remoteId,
+                    binding.cbReminder.isChecked,
+                    uiState.currentEditHabit.isCompleted,
+                    uiState.currentEditHabit.createdAt
+                )
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    "Please enter name and frequency",
+                    Toast.LENGTH_LONG
+                ).show()
             }
+
         }
         binding.cbReminder.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -180,6 +172,9 @@ class EditHabitFragment : Fragment() {
 //                }
                 habitViewModel.setPickedTime(timePickerState.hour, timePickerState.minute)
             }
+        }
+        binding.bt3.setOnClickListener {
+            navController.navigate(R.id.tipsFragment)
         }
     }
 
@@ -225,7 +220,8 @@ class EditHabitFragment : Fragment() {
         id: Long,
         refId: String?,
         isChecked: Boolean,
-        isCompleted: Boolean
+        isCompleted: Boolean,
+        createdAt: String
     ) {
         habitViewModel.updateHabit(
             HabitDomainModel(
@@ -235,7 +231,8 @@ class EditHabitFragment : Fragment() {
                 refId,
                 isChecked,
                 LocalTime.of(habitViewModel.pickedTimeHour, habitViewModel.pickedTimeMinutes),
-                isCompleted
+                isCompleted,
+                createdAt
             )
         )
         habitViewModel.updateCurrentFrequencyFragmentToNull()

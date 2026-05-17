@@ -39,6 +39,10 @@ class LogSyncManagerImpl @Inject constructor(
         habitDao.deleteAllHabitLogs()
     }
 
+    override suspend fun deleteAccount(): Result<Unit> {
+        return Result.success(Unit)
+    }
+
     private suspend fun syncSingleLog(log: HabitLog) {
         val currentUserId = authRepository.getUserId() ?: return
         if (log.isDeleted) {

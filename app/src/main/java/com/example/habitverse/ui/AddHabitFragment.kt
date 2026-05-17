@@ -44,6 +44,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalTime
 import kotlin.getValue
 
@@ -101,16 +102,13 @@ class AddHabitFragment : Fragment() {
             }
         }*/
         //In case the person selected some frequency ans then rotated screen
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                if (habitViewModel.selectedFrequency.first() != null) {
-                    val frequencyValue = habitViewModel.selectedFrequency.first()!!.frequency
-                    if (binding.autoCompleteTextView.text.toString() != frequencyValue) {
-                        binding.autoCompleteTextView.setText(frequencyValue, false)
-                    }
-                }
+        if (habitViewModel.selectedFrequency.value != null) {
+            val frequencyValue = habitViewModel.selectedFrequency.value!!.frequency
+            if (binding.autoCompleteTextView.text.toString() != frequencyValue) {
+                binding.autoCompleteTextView.setText(frequencyValue, false)
             }
         }
+
         /*binding.bt2.setOnClickListener {
             Log.d("TAG",binding.et1.text.isNullOrEmpty().toString())
             Log.d("TAG", habitViewModel._currentSelectedFrequencyAddFragment.toString())
@@ -125,25 +123,22 @@ class AddHabitFragment : Fragment() {
             }
         }*/
         binding.bt2.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    if (!binding.et1.text.isNullOrEmpty() && habitViewModel.selectedFrequency.first() != null) {
-                        val uiState = habitViewModel.habitUiState.first()
-                        clickOnSaveButton(
-                            navController,
-                            binding.et1.text.toString(),
-                            habitViewModel.selectedFrequency.first()!!,
-                            binding.cbReminder.isChecked
-                        )
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Please enter name and frequency",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+            if (!binding.et1.text.isNullOrEmpty() && habitViewModel.selectedFrequency.value != null) {
+                val uiState = habitViewModel.habitUiState.value
+                clickOnSaveButton(
+                    navController,
+                    binding.et1.text.toString(),
+                    habitViewModel.selectedFrequency.value!!,
+                    binding.cbReminder.isChecked
+                )
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    "Please enter name and frequency",
+                    Toast.LENGTH_LONG
+                ).show()
             }
+
         }
         binding.cbReminder.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -255,7 +250,8 @@ class AddHabitFragment : Fragment() {
                     habitViewModel.pickedTimeHour,
                     habitViewModel.pickedTimeMinutes
                 ),
-                isCompleted = false
+                isCompleted = false,
+                createdAt = LocalDate.now().toString()
             )
         )
         habitViewModel.updateCurrentFrequencyFragmentToNull()

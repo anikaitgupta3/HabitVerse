@@ -51,6 +51,8 @@ interface HabitDao {
     """)
     suspend fun deleteLog(habitId: Long, date: String)
 
+
+
     @Update
     suspend fun updateLog(log: HabitLog)
 
@@ -67,6 +69,50 @@ interface HabitDao {
 
     @Query("DELETE FROM habit_logs")
     suspend fun deleteAllHabitLogs()
+
+    @Query("select count(*) from habit_logs where completionDate>= :date7DaysBack and completionDate<=:currentDate and isDeleted==0")
+    fun getCountOfLogsCompletedIn7Days(currentDate:String,date7DaysBack: String): Flow<Long>
+
+    @Query("select count(*) from habit_logs where completionDate>= :date14DaysBack and completionDate<=:date7DaysBack and isDeleted==0")
+    fun getCountOfLogsCompletedInLast7Days(date7DaysBack: String,date14DaysBack: String): Flow<Long>
+
+
+    @Query("""
+    SELECT SUM(MIN(7, julianday(:currentDate) - julianday(createdAt) + 1))
+    FROM habits
+    WHERE isDeleted = 0
+""")
+    fun getTotalPossibleCompletionsInLast7Days(currentDate: String): Flow<Long>
+
+    @Query("""
+    SELECT SUM(MIN(7, julianday(:date7DaysBack) - julianday(createdAt) + 1))
+    FROM habits
+    WHERE isDeleted = 0
+""")
+    fun getTotalPossibleCompletionsInLast7To14Days(date7DaysBack: String):Flow<Long>
+
+    @Transaction
+    @Query("""
+    SELECT * FROM habits 
+    WHERE isDeleted = 0
+    ORDER BY id
+""")
+    fun getAllHabitsWithLogsOrdered(): Flow<List<HabitWithLogs>>
+
+    @Query("""
+        UPDATE habit_logs 
+        SET isDeleted = 1, syncState =  'PENDING' 
+        WHERE completionDate < :thresholdDate AND isDeleted = 0
+    """)
+    suspend fun markOldLogsAsDeleted(
+        thresholdDate: String
+    ): Int // Returns the number of rows updated
+
+
+
+
+
+
 
 
 

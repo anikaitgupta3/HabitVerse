@@ -10,3 +10,13 @@ sealed class RegistrationState {
     data class Error(val message: String): RegistrationState()
     object Idle: RegistrationState()
 }
+sealed class ForgotPasswordState {
+    object Success : ForgotPasswordState()
+    data class Error(val message: String): ForgotPasswordState()
+    object Idle: ForgotPasswordState()
+}
+sealed class DeleteAccountState {
+    object Success : DeleteAccountState()
+    data class Error(val message: String): DeleteAccountState()
+    object Idle: DeleteAccountState()
+}

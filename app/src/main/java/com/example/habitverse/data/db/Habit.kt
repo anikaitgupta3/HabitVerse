@@ -16,6 +16,7 @@ data class Habit(
     val isDeleted: Boolean,
     val remoteId: String?,
     val showNotification: Boolean,
-    val timeToShowNotification: LocalTime
+    val timeToShowNotification: LocalTime,
+    val createdAt: String
 
 )

@@ -8,7 +8,9 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.habitverse.R
 import com.example.habitverse.databinding.FragmentLoginBinding
@@ -51,38 +53,37 @@ class LoginFragment : Fragment() {
         }
         binding.btnLogin.setOnClickListener {
             if (!binding.etEmail.text.isNullOrEmpty() && !binding.etPassword.text.isNullOrEmpty()) {
-
                 habitViewModel.login(
-                    binding.etEmail.text.toString(),
-                    binding.etPassword.text.toString()
+                    binding.etEmail.text.toString(), binding.etPassword.text.toString()
                 )
-                viewLifecycleOwner.lifecycleScope.launch {
-
-                    habitViewModel.loginState.collect { state ->
-                        when (state) {
-                            is LoginState.Success -> {
-                                habitViewModel.clearRoomAndUpdateRoom()
-                                //findNavController().setGraph(R.navigation.main_graph)
-                                findNavController().navigate(R.id.main_graph)
-                                habitViewModel.updateLoginStateToIdle()
-                            }
-
-                            is LoginState.Error -> {
-                                Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT)
-                                    .show()
-                                habitViewModel.updateLoginStateToIdle()
-                            }
-
-                            else -> {}
-                        }
-                    }
-                }
             } else {
                 Toast.makeText(
-                    requireContext(),
-                    "Please enter email and password",
-                    Toast.LENGTH_SHORT
+                    requireContext(), "Please enter email and password", Toast.LENGTH_SHORT
                 ).show()
+            }
+        }
+        binding.btnForgotPassword.setOnClickListener {
+            findNavController().navigate(R.id.forgotPasswordFragment)
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                habitViewModel.loginState.collect { state ->
+                    when (state) {
+                        is LoginState.Success -> {
+                            habitViewModel.clearRoomAndUpdateRoom()
+                            findNavController().navigate(R.id.main_graph)
+                            habitViewModel.updateLoginStateToIdle()
+                        }
+
+                        is LoginState.Error -> {
+                            Toast.makeText(
+                                requireContext(), state.message, Toast.LENGTH_SHORT
+                            ).show()
+                            habitViewModel.updateLoginStateToIdle()
+                        }
+                        else -> {}
+                    }
+                }
             }
         }
 
