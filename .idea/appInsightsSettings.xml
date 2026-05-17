@@ -8,8 +8,8 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.example.habitverse" />
-                  <option name="mobileSdkAppId" value="1:207273878221:android:3701dbe9ae6a7727e17f84" />
+                  <option name="appId" value="com.anikaitgupta.habitverse" />
+                  <option name="mobileSdkAppId" value="1:207273878221:android:eddecc69cb9a5b9de17f84" />
                   <option name="projectId" value="habitverse-1d7c4" />
                   <option name="projectNumber" value="207273878221" />
                 </ConnectionSetting>

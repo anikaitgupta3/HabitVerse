@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "2.3.0"
+    alias(libs.plugins.google.firebase.crashlytics)
 }
 val localProps = Properties()
 val localPropertiesFile = File(rootProject.rootDir,"local.properties")
@@ -17,13 +18,13 @@ if (localPropertiesFile.exists() && localPropertiesFile.isFile) {
     }
 }
 android {
-    namespace = "com.example.habitverse"
+    namespace = "com.anikaitgupta.habitverse"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.example.habitverse"
+        applicationId = "com.anikaitgupta.habitverse"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -70,6 +71,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
@@ -122,5 +124,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
     // Source: https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:3.0-alpha-8")
 
 }

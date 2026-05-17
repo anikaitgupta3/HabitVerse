@@ -12,7 +12,7 @@
     </queries>
 
     <application
-        android:name=".HabitVerseApp"
+        android:name="com.anikaitgupta.habitverse.HabitVerseApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -22,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HabitVerse">
         <activity
-            android:name=".ui.MainActivity"
+            android:name="com.anikaitgupta.habitverse.ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,9 +35,9 @@
             android:authorities="${applicationId}.androidx.startup"
             tools:node="remove"
             tools:replace="android:authorities"/>
-        <receiver android:name=".data.AlarmReceiver"/>
+        <receiver android:name="com.anikaitgupta.habitverse.data.AlarmReceiver"/>
         <receiver
-            android:name=".ui.BootCompletedReceiver"
+            android:name="com.anikaitgupta.habitverse.ui.BootCompletedReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

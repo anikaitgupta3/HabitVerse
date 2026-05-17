@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/mainScreenFragment"
-        android:name="com.example.habitverse.ui.MainScreenFragment"
+        android:name="com.anikaitgupta.habitverse.ui.MainScreenFragment"
         android:label="Main Screen"
         tools:layout="@layout/fragment_main_screen">
 
@@ -28,13 +28,13 @@
 
     <fragment
         android:id="@+id/addHabitFragment"
-        android:name="com.example.habitverse.ui.AddHabitFragment"
+        android:name="com.anikaitgupta.habitverse.ui.AddHabitFragment"
         android:label="Add Habit"
         tools:layout="@layout/fragment_add_habit" />
 
     <fragment
         android:id="@+id/editHabitFragment"
-        android:name="com.example.habitverse.ui.EditHabitFragment"
+        android:name="com.anikaitgupta.habitverse.ui.EditHabitFragment"
         android:label="Edit Habit"
         tools:layout="@layout/fragment_edit_habit" >
         <action
@@ -43,17 +43,17 @@
     </fragment>
     <fragment
         android:id="@+id/analyticsFragment"
-        android:name="com.example.habitverse.ui.AnalyticsFragment"
+        android:name="com.anikaitgupta.habitverse.ui.AnalyticsFragment"
         android:label="fragment_analytics"
         tools:layout="@layout/fragment_analytics" />
     <fragment
         android:id="@+id/tipsFragment"
-        android:name="com.example.habitverse.ui.TipsFragment"
+        android:name="com.anikaitgupta.habitverse.ui.TipsFragment"
         android:label="fragment_tips"
         tools:layout="@layout/fragment_tips" />
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.example.habitverse.ui.SettingsFragment"
+        android:name="com.anikaitgupta.habitverse.ui.SettingsFragment"
         android:label="fragment_settings"
         tools:layout="@layout/fragment_settings" />
 
