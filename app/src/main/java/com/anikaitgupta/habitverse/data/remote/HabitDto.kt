@@ -1,8 +1,9 @@
 package com.anikaitgupta.habitverse.data.remote
 
+import androidx.annotation.Keep
 import com.anikaitgupta.habitverse.data.Frequency
 import java.time.LocalDate
-
+@Keep
 data class HabitDto(
     val id: Long = 0,                         // Added = 0
     val habitName: String = "",              // Added = ""

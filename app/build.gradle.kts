@@ -22,12 +22,13 @@ android {
     compileSdk {
         version = release(36)
     }
-
+    // ADD THIS LINE HERE:
+    ndkVersion = "30.0.14904198 rc1"
     defaultConfig {
         applicationId = "com.anikaitgupta.habitverse"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
+        versionCode = 3
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -36,12 +37,19 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            //isMinifyEnabled = false
+            isMinifyEnabled = true     // Enables R8 shrinking, optimization, and obfuscation
+            isShrinkResources = true   // Removes unused layout assets, XMLs, and drawables
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "API_KEY", localProps.getProperty("API_KEY"))// IF any
+            buildConfigField("String", "API_KEY", localProps.getProperty("API_KEY"))
+            signingConfig = signingConfigs.getByName("debug")// IF any
+            // This is the correct way to declare full symbol mapping inside Kotlin DSL
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
         debug {
             buildConfigField("String", "API_KEY", localProps.getProperty("API_KEY"))// IF any
@@ -64,6 +72,8 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
+
+
 
 }
 

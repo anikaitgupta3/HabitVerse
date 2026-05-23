@@ -1,10 +1,11 @@
 package com.anikaitgupta.habitverse.data.db
 
+import androidx.annotation.Keep
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.anikaitgupta.habitverse.data.SyncState
-
+@Keep
 @Entity(tableName = "habit_logs",
     indices = [Index(value = ["habitId", "completionDate"], unique = true)])
 data class HabitLog(

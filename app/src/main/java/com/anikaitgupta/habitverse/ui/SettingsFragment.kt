@@ -66,7 +66,7 @@ class SettingsFragment : Fragment() {
 
         }
         binding.privacyPolicyCard.setOnClickListener {
-            val website = "https://hyperskill.org".toUri()
+            val website = "https://sites.google.com/view/habitverseprivacypolicy".toUri()
             val intent = Intent(Intent.ACTION_VIEW, website)
             startActivity(intent)
         }

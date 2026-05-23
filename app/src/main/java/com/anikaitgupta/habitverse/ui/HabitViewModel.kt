@@ -232,6 +232,7 @@ class HabitViewModel @Inject constructor(
 
     }
     fun cleanRoom(){
+        deleteAllAlarms()
         viewModelScope.launch {
             syncManager.cleanRoom()
         }
@@ -239,7 +240,7 @@ class HabitViewModel @Inject constructor(
             logSyncManager.cleanRoom()
         }
         //workManager.cancelAllWork()
-        deleteAllAlarms()
+
     }
      fun createAccount(emailId: String, password: String) {
         viewModelScope.launch {
@@ -295,9 +296,7 @@ class HabitViewModel @Inject constructor(
         }
     }
     fun deleteAllAlarms(){
-        viewModelScope.launch {
-            alarmScheduler.cancelAll(habitUiState.value.listOfHabits.map { AlarmItem(it.id!!) })
-        }
+        alarmScheduler.cancelAll(habitUiState.value.listOfHabits.map { AlarmItem(it.id!!) })
     }
 
     fun getTipsForHabitImprovement(habitName: String) {
@@ -333,6 +332,7 @@ class HabitViewModel @Inject constructor(
         _geminiUiState.value = GeminiUiState.Idle
     }
     fun deleteAccount(){
+        deleteAllAlarms()
         viewModelScope.launch {
             try {
                 val result = syncManager.deleteAccount()

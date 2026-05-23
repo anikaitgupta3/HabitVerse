@@ -34,7 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+//import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.anikaitgupta.habitverse.R
 
@@ -324,8 +324,8 @@ private fun TrendBadge(text: String, isPositive: Boolean) {
 //        }
 //    }
 //}
-@Preview
-@Composable
-fun AnalyticsPreview(){
-    AnalyticsScreen(HabitAnalyticsUiState(),{})
-}
+//@Preview
+//@Composable
+//fun AnalyticsPreview(){
+//    AnalyticsScreen(HabitAnalyticsUiState(),{})
+//}
