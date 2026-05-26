@@ -28,19 +28,23 @@ class TipsFragment : Fragment() {
     private var _binding: FragmentTipsBinding? = null
     private val binding get() = _binding!!
     private val habitViewModel by activityViewModels<HabitViewModel>()
-    private lateinit var adapter: TipsAdapter
+    private var adapter: TipsAdapter? = null
     private lateinit var textToSpeech: TextToSpeech
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        textToSpeech = TextToSpeech(requireContext().applicationContext) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                textToSpeech.language = Locale.US
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = DataBindingUtil.inflate(inflater, R.layout.fragment_tips, container, false)
-        textToSpeech = TextToSpeech(requireContext()) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                textToSpeech.language = Locale.US
-            }
-        }
         return binding.root
     }
 
@@ -48,12 +52,14 @@ class TipsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         adapter = TipsAdapter() { text ->
-            textToSpeech.speak(
-                text,
-                TextToSpeech.QUEUE_FLUSH,
-                null,
-                null
-            )
+            if (::textToSpeech.isInitialized) {
+                textToSpeech.speak(
+                    text,
+                    TextToSpeech.QUEUE_FLUSH,
+                    null,
+                    null
+                )
+            }
         }
         binding.rvMessages.adapter = adapter
 
@@ -68,7 +74,7 @@ class TipsFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     habitViewModel.messages.collectLatest { messages ->
-                        adapter.submitList(messages)
+                        adapter?.submitList(messages)
                         if (messages.isNotEmpty()) {
                             binding.rvMessages.smoothScrollToPosition(messages.size - 1)
                         }
@@ -178,11 +184,15 @@ class TipsFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.rvMessages.adapter = null
+        adapter = null
         _binding = null
     }
     override fun onDestroy() {
-        textToSpeech.stop()
-        textToSpeech.shutdown()
+        if (::textToSpeech.isInitialized) {
+            textToSpeech.stop()
+            textToSpeech.shutdown()
+        }
         super.onDestroy()
     }
 }

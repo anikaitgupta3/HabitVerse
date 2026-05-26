@@ -52,8 +52,20 @@ class LogSyncManagerImpl @Inject constructor(
             permanentlyDeleteLocal(log)
             return
         } else if (log.remoteId == null) {
-            val remoteId = logRemoteDataSource.insertLog(log.toHabitLogDto(), log.habitId, currentUserId)
-            updateLocalWithRemoteId(log, remoteId)
+            // Look up the habit's Firestore remoteId so it gets stored in Firestore
+            val habitRemoteId = log.habitRemoteId
+                ?: habitDao.getHabitByIdSuspend(log.habitId)?.remoteId
+            val logWithRemoteHabitId = if (habitRemoteId != null && log.habitRemoteId == null) {
+                log.copy(habitRemoteId = habitRemoteId)
+            } else {
+                log
+            }
+            // Also update local copy with habitRemoteId if it was missing
+            if (log.habitRemoteId == null && habitRemoteId != null) {
+                habitDao.updateLog(logWithRemoteHabitId)
+            }
+            val remoteId = logRemoteDataSource.insertLog(logWithRemoteHabitId.toHabitLogDto(), log.habitId, currentUserId)
+            updateLocalWithRemoteId(logWithRemoteHabitId, remoteId)
             return
         }
     }
@@ -79,7 +91,17 @@ class LogSyncManagerImpl @Inject constructor(
         val currentUserId = authRepository.getUserId() ?: return
         val logList = logRemoteDataSource.getAllLogs(currentUserId)
         for (logDto in logList) {
-            habitDao.insertLog(logDto.toHabitLog())
+            // Resolve habitRemoteId to the new local Room habitId
+            val localHabitId = if (logDto.habitRemoteId != null) {
+                habitDao.getHabitByRemoteId(logDto.habitRemoteId)?.id
+            } else {
+                null
+            }
+            if (localHabitId != null) {
+                habitDao.insertLog(logDto.toHabitLog().copy(habitId = localHabitId))
+            } else {
+                Log.w("LOG_SYNC", "Skipping log ${logDto.remoteId}: could not resolve habitRemoteId=${logDto.habitRemoteId}")
+            }
         }
     }
 }

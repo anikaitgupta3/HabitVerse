@@ -30,10 +30,10 @@ fun HabitDto.toHabit(): Habit{
         LocalTime.parse(timeToShowNotification),createdAt)
 }
 fun HabitLog.toHabitLogDto(): HabitLogDto {
-    return HabitLogDto(logId,habitId/*,habitRemoteId*/,completionDate,remoteId)
+    return HabitLogDto(logId,habitId,habitRemoteId,completionDate,remoteId)
 }
 fun HabitLogDto.toHabitLog(): HabitLog{
-    return HabitLog(logId=0,habitId,/*habitRemoteId*/completionDate,SyncState.SUCCESS,false,remoteId)
+    return HabitLog(logId=0,habitId,habitRemoteId,completionDate,SyncState.SUCCESS,false,remoteId)
 }
 //fun String.toGeminiInputData(): GeminiInputData{
 //    return GeminiInputData(listOf(Content(listOf(Part(this)))))

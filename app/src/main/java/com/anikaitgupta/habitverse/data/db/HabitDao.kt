@@ -29,6 +29,9 @@ interface HabitDao {
     @Query("select* from habits where id = :id")
     fun getHabitsById(id: Long): Flow<Habit>
 
+    @Query("SELECT * FROM habits WHERE id = :id LIMIT 1")
+    suspend fun getHabitByIdSuspend(id: Long): Habit?
+
     @Query("select* from habits where syncState != 'SUCCESS'")
     suspend fun getAllPendingAndFailedHabits():List<Habit>
 
@@ -37,6 +40,9 @@ interface HabitDao {
 
     @Query("DELETE FROM habits")
     suspend fun deleteAllHabits()
+
+    @Query("SELECT * FROM habits WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getHabitByRemoteId(remoteId: String): Habit?
 
     @Transaction
     @Query("SELECT * FROM habits WHERE isDeleted = 0")

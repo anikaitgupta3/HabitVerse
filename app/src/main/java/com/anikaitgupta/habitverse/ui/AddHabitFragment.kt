@@ -137,11 +137,10 @@ class AddHabitFragment : Fragment() {
                     is24Hour = true,
                 )
                 HabitTimePicker(timePickerState)
-                // ✅ Triggers whenever hour or minute changes
-//                LaunchedEffect(timePickerState.hour, timePickerState.minute) {
-//                    habitViewModel.setPickedTime(timePickerState.hour, timePickerState.minute)
-//                }
-                habitViewModel.setPickedTime(timePickerState.hour, timePickerState.minute)
+                
+                androidx.compose.runtime.LaunchedEffect(timePickerState.hour, timePickerState.minute) {
+                    habitViewModel.setPickedTime(timePickerState.hour, timePickerState.minute)
+                }
             }
         }
     }

@@ -6,7 +6,7 @@ import androidx.annotation.Keep
 data class HabitLogDto(
     val logId:Long=0,
     val habitId:Long=0,
-//    val habitRemoteId: String? = null,
+    val habitRemoteId: String? = null,
     val completionDate: String="",
     val remoteId: String?=null // Firestore document ID for the log
 

@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.anikaitgupta.habitverse.R
 import com.anikaitgupta.habitverse.databinding.FragmentForgotPasswordBinding
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import kotlin.getValue
 
@@ -26,6 +27,7 @@ import kotlin.getValue
  * Use the [ForgotPasswordFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
+@AndroidEntryPoint
 class ForgotPasswordFragment : Fragment() {
     // TODO: Rename and change types of parameters
     //lateinit var binding: FragmentForgotPasswordBinding

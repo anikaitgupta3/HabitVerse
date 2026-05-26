@@ -174,8 +174,8 @@ class HabitViewModel @Inject constructor(
     }
      fun clearRoomAndUpdateRoom(){
          viewModelScope.launch {
-             logSyncManager.cleanRoomAndUpdateRoom()
              syncManager.cleanRoomAndUpdateRoom()
+             logSyncManager.cleanRoomAndUpdateRoom()
              scheduleNotifications()
 
          }
@@ -301,7 +301,7 @@ class HabitViewModel @Inject constructor(
     fun toggleCompletion(habitId: Long, isCurrentlyDone: Boolean, remoteId: String?) {
         viewModelScope.launch {
             if (isCurrentlyDone) habitUseCase.deleteLog(habitId, todayDate)
-            else habitUseCase.insertLog(HabitLog(habitId = habitId, completionDate = todayDate, isDeleted = false, syncState = SyncState.PENDING, remoteId = null, /*habitRemoteId = remoteId*/))
+            else habitUseCase.insertLog(HabitLog(habitId = habitId, habitRemoteId = remoteId, completionDate = todayDate, isDeleted = false, syncState = SyncState.PENDING, remoteId = null))
         }
     }
     fun addUserInput(userText: String){

@@ -20,40 +20,21 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        //setContentView(R.layout.activity_main)
-//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-//            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-//            insets
-//        }
 
         val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fragmentContainerView)) { view, insets ->
+        
+        ViewCompat.setOnApplyWindowInsetsListener(binding.fragmentContainerView) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        /*val navHostFragment =
-        supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
+
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         val navController = navHostFragment.navController
 
         if (savedInstanceState == null) {
-            if (authRepository.checkLoggedIn()) {
-                navController.setGraph(R.navigation.main_graph)
-            } else {
-                navController.setGraph(R.navigation.auth_graph)
-            }
-        }*/
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.fragmentContainerView)
-                    as NavHostFragment
-
-        val navController = navHostFragment.navController
-
-        if (savedInstanceState == null) {
-
-            val navGraph = navController.navInflater
-                .inflate(R.navigation.root_nav_graph)
+            val navGraph = navController.navInflater.inflate(R.navigation.root_nav_graph)
 
             if (authRepository.checkLoggedIn()) {
                 navGraph.setStartDestination(R.id.main_graph)
