@@ -35,6 +35,7 @@ class SyncManagerImpl @Inject constructor(
         try {
             habitDao.deleteAllHabits()
             insertAllHabits()
+            //updateAllLogsWithNewHabitId()
         } catch (e: Exception) {
             Log.e("SYNC_ERROR", e.message, e) // NEVER leave a catch block empty!
         }
@@ -71,6 +72,7 @@ class SyncManagerImpl @Inject constructor(
         else if (habit.remoteId == null) {
             val remoteId=remoteDataSource.insertHabit(habit.toHabitDto(),currentUserId!!)
             updateLocalWithRemoteId(habit,remoteId)
+            //updateLogsWithRemoteId(habit.id, remoteId)
             //markAsSynced(habit)
             return
         }
@@ -85,6 +87,9 @@ class SyncManagerImpl @Inject constructor(
             habit.copy(remoteId = remoteId,syncState = SyncState.SUCCESS)
         )
     }
+//    private suspend fun updateLogsWithRemoteId(habitId:Long,remoteId: String){
+//        habitDao.updateLogsWithRemoteId(habitId,remoteId)
+//    }
     private suspend fun markAsSynced(habit: Habit) {
         habitDao.editHabit(
             habit.copy(
@@ -109,4 +114,12 @@ class SyncManagerImpl @Inject constructor(
             habitDao.insertHabit(habit.toHabit())
         }
     }
+//    private suspend fun updateAllLogsWithNewHabitId(){
+//        val habitList= habitDao.getAllHabitsAsList()
+//        habitList.forEach { habit ->
+//            habit.remoteId?.let { remoteId ->
+//                habitDao.updateLogsWithNewHabitId(habit.id, remoteId)
+//            }
+//        }
+//    }
 }

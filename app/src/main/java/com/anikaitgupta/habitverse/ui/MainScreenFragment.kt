@@ -124,7 +124,7 @@ class MainScreenFragment : Fragment(), MenuProvider {
     }
 
     fun onCheckboxCheckedChanged(habit: HabitDomainModel, isCurrentlyDone: Boolean) {
-        habitViewModel.toggleCompletion(habit.id!!, isCurrentlyDone)
+        habitViewModel.toggleCompletion(habit.id!!, isCurrentlyDone,habit.remoteId)
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {

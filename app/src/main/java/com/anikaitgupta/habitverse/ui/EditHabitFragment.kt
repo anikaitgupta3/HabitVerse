@@ -168,6 +168,7 @@ class EditHabitFragment : Fragment() {
             }
         }
         binding.bt3.setOnClickListener {
+            habitViewModel.emptyMessagesList()
             navController.navigate(R.id.tipsFragment)
         }
     }

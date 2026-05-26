@@ -158,7 +158,7 @@ class HabitUseCase @Inject constructor(private val habitRepository: HabitReposit
         }
         return streakCtr
     }
-    suspend fun getTipsForHabitImprovement(apiKey:String,string: String): GeminiResult{
-        return habitRepository.getTipsForHabitImprovement(apiKey,string)
+    suspend fun getTipsForHabitImprovement(apiKey:String,chatMessageList: List<ChatMessage>): GeminiResult{
+        return habitRepository.getTipsForHabitImprovement(apiKey,chatMessageList)
     }
 }

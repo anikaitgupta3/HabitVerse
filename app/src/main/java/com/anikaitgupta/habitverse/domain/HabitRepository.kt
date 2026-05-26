@@ -20,5 +20,5 @@ interface HabitRepository {
     fun getTotalPossibleCompletionsInLast7Days(currentDate: String): Flow<Long>
     fun getTotalPossibleCompletionsInLast7To14Days(date7DaysBack: String):Flow<Long>
     fun getAllHabitsWithLogsOrdered(): Flow<List<HabitWithLogs>>
-    suspend fun getTipsForHabitImprovement(apiKey:String,string: String): GeminiResult
+    suspend fun getTipsForHabitImprovement(apiKey:String,chatMessageList: List<ChatMessage>): GeminiResult
 }

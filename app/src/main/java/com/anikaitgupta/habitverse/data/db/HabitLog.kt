@@ -12,6 +12,7 @@ data class HabitLog(
     @PrimaryKey(autoGenerate = true)
     val logId:Long=0,
     val habitId:Long,
+    //val habitRemoteId: String?,
     val completionDate: String,
     val syncState: SyncState,
     val isDeleted: Boolean,

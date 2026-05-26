@@ -8,6 +8,7 @@ import com.anikaitgupta.habitverse.data.network.GeminiApi
 import com.anikaitgupta.habitverse.data.network.GeminiResult
 import com.anikaitgupta.habitverse.di.HabitSync
 import com.anikaitgupta.habitverse.di.LogSync
+import com.anikaitgupta.habitverse.domain.ChatMessage
 import com.anikaitgupta.habitverse.domain.HabitDomainModel
 import com.anikaitgupta.habitverse.domain.HabitRepository
 import com.anikaitgupta.habitverse.domain.SyncManager
@@ -105,11 +106,11 @@ class HabitRepositoryImpl @Inject constructor(private val habitDao: HabitDao,@Ha
         return habitDao.getAllHabitsWithLogsOrdered()
     }
 
-    override suspend fun getTipsForHabitImprovement(apiKey:String,string: String): GeminiResult {
+    override suspend fun getTipsForHabitImprovement(apiKey:String,chatMessageList: List<ChatMessage>): GeminiResult {
         //TODO("Not yet implemented")
         //emit(GeminiResult.Loading)
         try {
-            val geminiResponse = geminiApi.getTipsForHabit(apiKey, string.toGeminiInputData())
+            val geminiResponse = geminiApi.getTipsForHabit(apiKey, chatMessageList.toGeminiInputData())
             val geminiBody =
                 geminiResponse.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
             if (!geminiResponse.isSuccessful || geminiBody.isNullOrEmpty()) {

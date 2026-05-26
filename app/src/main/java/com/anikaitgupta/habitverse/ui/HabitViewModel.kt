@@ -13,6 +13,7 @@ import com.anikaitgupta.habitverse.di.LogSync
 import com.anikaitgupta.habitverse.domain.AlarmItem
 import com.anikaitgupta.habitverse.domain.AlarmScheduler
 import com.anikaitgupta.habitverse.domain.AuthRepository
+import com.anikaitgupta.habitverse.domain.ChatMessage
 import com.anikaitgupta.habitverse.domain.HabitDomainModel
 import com.anikaitgupta.habitverse.domain.HabitUseCase
 import com.anikaitgupta.habitverse.domain.SyncManager
@@ -49,7 +50,7 @@ data class HabitAnalyticsUiState(
 sealed interface GeminiUiState {
     object Idle : GeminiUiState
     object Loading : GeminiUiState
-    data class Success(val data: String) : GeminiUiState
+    object Success : GeminiUiState
     data class Error(val message: String) : GeminiUiState
 }
 
@@ -95,6 +96,11 @@ class HabitViewModel @Inject constructor(
 
     private var tipsJob: Job? = null
 
+    private val _messages =
+        MutableStateFlow<List<ChatMessage>>(emptyList())
+
+    val messages = _messages.asStateFlow()
+
 
     private val todayDate = LocalDate.now().toString()
     val habitUiState: StateFlow<HabitUiState> = combine(
@@ -111,52 +117,6 @@ class HabitViewModel @Inject constructor(
         }
         HabitUiState(listOfHabits = mapped, currentEditHabit = currentEdit)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitUiState())
-
-//    val analyticsUiState:StateFlow<HabitAnalyticsUiState> = combine(
-//        habitUseCase.getCountOfLogsCompletedIn7Days(LocalDate.now().toString(), LocalDate.now().minusDays(6).toString()),
-//        habitUseCase.getCountOfLogsCompletedInLast7Days(LocalDate.now().minusDays(7).toString(), LocalDate.now().minusDays(13).toString()),
-//        habitUseCase.getTotalPossibleCompletionsInLast7Days(LocalDate.now().toString()),
-//        habitUseCase.getTotalPossibleCompletionsInLast7To14Days(LocalDate.now().minusDays(7).toString()),
-//        habitUseCase.getRecoveryRate(),
-//        habitUseCase.calculateNumberOfHabitsWithStreak()
-//    ){logsCurr,logsPrev,totalCurr,totalPrev,recoveryRate,streakCount->
-//        HabitAnalyticsUiState(logCountThisWeek = logsCurr, logCountLastWeek = logsPrev, habitCountThisWeek = totalCurr, habitCountLastWeek = totalPrev, recoveryRate = recoveryRate, streakCount = streakCount)
-//    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitAnalyticsUiState())
-//val analyticsUiState: StateFlow<HabitAnalyticsUiState> = combine(
-//    combine(
-//        habitUseCase.getCountOfLogsCompletedIn7Days(
-//            LocalDate.now().toString(),
-//            LocalDate.now().minusDays(6).toString()
-//        ),
-//        habitUseCase.getCountOfLogsCompletedInLast7Days(
-//            LocalDate.now().minusDays(7).toString(),
-//            LocalDate.now().minusDays(13).toString()
-//        ),
-//        habitUseCase.getTotalPossibleCompletionsInLast7Days(
-//            LocalDate.now().toString()
-//        )
-//    ) { logsCurr, logsPrev, totalCurr ->
-//        Triple(logsCurr, logsPrev, totalCurr)
-//    },
-//    combine(
-//        habitUseCase.getTotalPossibleCompletionsInLast7To14Days(
-//            LocalDate.now().minusDays(7).toString()
-//        ),
-//        habitUseCase.getRecoveryRate(),
-//        habitUseCase.calculateNumberOfHabitsWithStreak()
-//    ) { totalPrev, recoveryRate, streakCount ->
-//        Triple(totalPrev, recoveryRate, streakCount)
-//    }
-//) { (logsCurr, logsPrev, totalCurr), (totalPrev, recoveryRate, streakCount) ->
-//    HabitAnalyticsUiState(
-//        logCountThisWeek = logsCurr,
-//        logCountLastWeek = logsPrev,
-//        habitCountThisWeek = totalCurr,
-//        habitCountLastWeek = totalPrev,
-//        recoveryRate = recoveryRate,
-//        streakCount = streakCount
-//    )
-//}.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitAnalyticsUiState())
 
     val analyticsUiState: StateFlow<HabitAnalyticsUiState> = combine(
         habitUseCase.getAnalyticsData(),
@@ -214,14 +174,11 @@ class HabitViewModel @Inject constructor(
     }
      fun clearRoomAndUpdateRoom(){
          viewModelScope.launch {
+             logSyncManager.cleanRoomAndUpdateRoom()
              syncManager.cleanRoomAndUpdateRoom()
              scheduleNotifications()
 
          }
-         viewModelScope.launch {
-             logSyncManager.cleanRoomAndUpdateRoom()
-         }
-
     }
     suspend fun scheduleNotifications(){
         //val listOfHabits = habitUiState.value.listOfHabits
@@ -299,18 +256,6 @@ class HabitViewModel @Inject constructor(
         alarmScheduler.cancelAll(habitUiState.value.listOfHabits.map { AlarmItem(it.id!!) })
     }
 
-    fun getTipsForHabitImprovement(habitName: String) {
-        tipsJob?.cancel()
-        tipsJob = viewModelScope.launch {
-            _geminiUiState.value = GeminiUiState.Loading
-            val result = habitUseCase.getTipsForHabitImprovement(BuildConfig.API_KEY, habitName)
-            _geminiUiState.value = when (result) {
-                is GeminiResult.Success -> GeminiUiState.Success(result.output)
-                is GeminiResult.Error -> GeminiUiState.Error(result.message)
-                is GeminiResult.Loading -> GeminiUiState.Loading
-            }
-        }
-    }
     fun sendPasswordResetEmail(email: String) {
         viewModelScope.launch {
             try {
@@ -353,11 +298,39 @@ class HabitViewModel @Inject constructor(
         _deleteAccountState.value = DeleteAccountState.Idle
     }
 
-    fun toggleCompletion(habitId: Long, isCurrentlyDone: Boolean) {
+    fun toggleCompletion(habitId: Long, isCurrentlyDone: Boolean, remoteId: String?) {
         viewModelScope.launch {
             if (isCurrentlyDone) habitUseCase.deleteLog(habitId, todayDate)
-            else habitUseCase.insertLog(HabitLog(habitId = habitId, completionDate = todayDate, isDeleted = false, syncState = SyncState.PENDING, remoteId = null))
+            else habitUseCase.insertLog(HabitLog(habitId = habitId, completionDate = todayDate, isDeleted = false, syncState = SyncState.PENDING, remoteId = null, /*habitRemoteId = remoteId*/))
         }
+    }
+    fun addUserInput(userText: String){
+        _messages.value += ChatMessage(
+            role = "user",
+            text = userText
+        )
+        getTipsForHabitImprovement()
+    }
+    fun getTipsForHabitImprovement() {
+        tipsJob?.cancel()
+        tipsJob = viewModelScope.launch {
+            _geminiUiState.value = GeminiUiState.Loading
+            val result = habitUseCase.getTipsForHabitImprovement(BuildConfig.API_KEY, messages.value.takeLast(10))
+            _geminiUiState.value = when (result) {
+                is GeminiResult.Success -> {
+                    _messages.value += ChatMessage(
+                        role = "model",
+                        text = result.output
+                    )
+                    GeminiUiState.Success
+                }
+                is GeminiResult.Error -> GeminiUiState.Error(result.message)
+                is GeminiResult.Loading -> GeminiUiState.Loading
+            }
+        }
+    }
+    fun emptyMessagesList(){
+        _messages.value=emptyList()
     }
 }
 

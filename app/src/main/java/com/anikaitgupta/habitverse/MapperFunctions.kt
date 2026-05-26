@@ -6,9 +6,11 @@ import com.anikaitgupta.habitverse.data.db.HabitLog
 import com.anikaitgupta.habitverse.data.network.GeminiInputData.Content
 import com.anikaitgupta.habitverse.data.network.GeminiInputData.GeminiInputData
 import com.anikaitgupta.habitverse.data.network.GeminiInputData.Part
+import com.anikaitgupta.habitverse.data.network.GeminiInputData.SystemInstruction
 import com.anikaitgupta.habitverse.data.remote.HabitDto
 import com.anikaitgupta.habitverse.data.remote.HabitLogDto
 import com.anikaitgupta.habitverse.domain.HabitDomainModel
+import com.anikaitgupta.habitverse.domain.ChatMessage
 import java.time.LocalTime
 
 fun Habit.toDomain(isCompleted: Boolean): HabitDomainModel{
@@ -28,11 +30,31 @@ fun HabitDto.toHabit(): Habit{
         LocalTime.parse(timeToShowNotification),createdAt)
 }
 fun HabitLog.toHabitLogDto(): HabitLogDto {
-    return HabitLogDto(logId,habitId,completionDate,remoteId)
+    return HabitLogDto(logId,habitId/*,habitRemoteId*/,completionDate,remoteId)
 }
 fun HabitLogDto.toHabitLog(): HabitLog{
-    return HabitLog(logId=0,habitId,completionDate,SyncState.SUCCESS,false,remoteId)
+    return HabitLog(logId=0,habitId,/*habitRemoteId*/completionDate,SyncState.SUCCESS,false,remoteId)
 }
-fun String.toGeminiInputData(): GeminiInputData{
-    return GeminiInputData(listOf(Content(listOf(Part(this)))))
+//fun String.toGeminiInputData(): GeminiInputData{
+//    return GeminiInputData(listOf(Content(listOf(Part(this)))))
+//}
+fun List<ChatMessage>.toGeminiInputData(): GeminiInputData {
+    return GeminiInputData(
+        systemInstruction = SystemInstruction(
+            parts = listOf(
+                Part(
+                    "You are a helpful habit coach. Keep responses under 80 words."
+                )
+            )
+        ),
+        contents = map {
+
+            Content(
+                role = it.role,
+                parts = listOf(
+                    Part(it.text)
+                )
+            )
+        }
+    )
 }

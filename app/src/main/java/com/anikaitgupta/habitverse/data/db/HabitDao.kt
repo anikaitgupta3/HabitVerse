@@ -23,6 +23,9 @@ interface HabitDao {
     @Query("select* from habits where isDeleted = 0")
     fun getAllHabits(): Flow<List<Habit>>
 
+    @Query("select* from habits where isDeleted=0")
+    suspend fun getAllHabitsAsList():List<Habit>
+
     @Query("select* from habits where id = :id")
     fun getHabitsById(id: Long): Flow<Habit>
 
@@ -51,8 +54,11 @@ interface HabitDao {
     """)
     suspend fun deleteLog(habitId: Long, date: String)
 
-
-
+//    @Query("update habit_logs set habitRemoteId=:remoteId where habitId =:habitId")
+//    suspend fun updateLogsWithRemoteId(habitId: Long,remoteId: String)
+//
+//    @Query("update habit_logs set habitId=:habitId where habitRemoteId=:remoteId and habitRemoteId!=null")
+//    suspend fun updateLogsWithNewHabitId(habitId: Long,remoteId: String)
     @Update
     suspend fun updateLog(log: HabitLog)
 
