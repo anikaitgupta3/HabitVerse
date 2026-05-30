@@ -51,7 +51,7 @@ class TipsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        adapter = TipsAdapter() { text ->
+        adapter = TipsAdapter(::showToast) { text ->
             if (::textToSpeech.isInitialized) {
                 textToSpeech.speak(
                     text,
@@ -180,6 +180,10 @@ class TipsFragment : Fragment() {
                 }
             }
         }
+    }
+    fun showToast(){
+        Toast.makeText(requireContext(),"Thank you. This response has been flagged for safety and quality review.",
+            Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {

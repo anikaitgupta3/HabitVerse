@@ -46,6 +46,15 @@
                     tools:text="This is a chat message content that might span multiple lines." />
 
                 <ImageButton
+                    android:id="@+id/flagButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40.dp"
+                    android:layout_gravity="bottom"
+                    android:src="@drawable/flag_2_24px"
+                    android:contentDescription="Flag Response"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="20dp" />
+                <ImageButton
                     android:id="@+id/speakAndPauseButton"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"

@@ -4,14 +4,16 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.anikaitgupta.habitverse.databinding.ItemChatMessageBinding
 import com.anikaitgupta.habitverse.domain.ChatMessage
 import com.google.android.material.color.MaterialColors
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
-class TipsAdapter(private val onSpeakClick: (String) -> Unit) : ListAdapter<ChatMessage, TipsAdapter.ChatViewHolder>(ChatDiffCallback()) {
+class TipsAdapter(private val showToast:()->Unit,private val onSpeakClick: (String) -> Unit) : ListAdapter<ChatMessage, TipsAdapter.ChatViewHolder>(ChatDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
         val binding = ItemChatMessageBinding.inflate(
@@ -66,6 +68,13 @@ class TipsAdapter(private val onSpeakClick: (String) -> Unit) : ListAdapter<Chat
             binding.tvRole.layoutParams = roleParams
             binding.speakAndPauseButton.setOnClickListener {
                 onSpeakClick(message.text)
+            }
+            binding.flagButton.setOnClickListener {
+                val flaggedText = message.text
+                FirebaseCrashlytics.getInstance().recordException(
+                    Exception("User Flagged AI Response: $flaggedText")
+                )
+                showToast()
             }
         }
     }

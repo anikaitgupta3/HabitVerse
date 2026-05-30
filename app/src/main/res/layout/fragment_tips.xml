@@ -28,57 +28,65 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
+        <!-- Messages RecyclerView — fills space between toolbar and bottom bar -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvMessages"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:clipToPadding="false"
-            android:padding="8dp"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toTopOf="@+id/statusContainer"
+            app:layout_constraintBottom_toTopOf="@id/statusContainer"
             app:layout_constraintTop_toBottomOf="@id/app_bar_layout"
             tools:listitem="@layout/item_chat_message" />
 
+        <!-- Loading / error status bar -->
         <FrameLayout
             android:id="@+id/statusContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/inputLayout">
+            app:layout_constraintBottom_toTopOf="@id/bottomBar"
+            app:layout_constraintTop_toBottomOf="@id/rvMessages">
 
             <LinearLayout
                 android:id="@+id/loadingLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:orientation="vertical"
+                android:orientation="horizontal"
                 android:padding="8dp"
                 android:visibility="gone"
-                tools:visibility="visible">
+                tools:visibility="gone">
 
                 <com.google.android.material.progressindicator.CircularProgressIndicator
                     android:id="@+id/progressBar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:indeterminate="true"
-                    app:indicatorSize="24dp" />
+                    app:indicatorSize="20dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="AI is thinking..."
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                    android:layout_marginStart="8dp"
+                    android:text="AI is thinking…"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/errorLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="8dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
                 android:visibility="gone"
-                tools:visibility="visible">
+                tools:visibility="gone">
 
                 <TextView
                     android:id="@+id/tvError"
@@ -98,64 +106,104 @@
                     android:textSize="12sp"
                     app:icon="@drawable/restart_alt_24px"
                     app:iconSize="16dp" />
+
             </LinearLayout>
+
         </FrameLayout>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/inputLayout"
+        <!-- Bottom bar: input row + disclaimer stacked in a LinearLayout -->
+        <LinearLayout
+            android:id="@+id/bottomBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="8dp"
+            android:orientation="vertical"
             android:background="?attr/colorSurface"
-            app:layout_constraintBottom_toBottomOf="parent">
+            android:elevation="4dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilMessage"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?attr/colorOutlineVariant" />
+
+            <!-- Input row -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/inputLayout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Ask anything..."
-                app:boxCornerRadiusBottomEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusTopStart="24dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/btnSpeak"
-                app:layout_constraintStart_toStartOf="parent">
+                android:paddingHorizontal="10dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="6dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etMessage"
-                    android:layout_width="match_parent"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilMessage"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:inputType="textMultiLine"
-                    android:maxLines="4" />
+                    android:hint="Ask anything…"
+                    app:boxCornerRadiusBottomEnd="24dp"
+                    app:boxCornerRadiusBottomStart="24dp"
+                    app:boxCornerRadiusTopEnd="24dp"
+                    app:boxCornerRadiusTopStart="24dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnSpeak"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
-            </com.google.android.material.textfield.TextInputLayout>
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnSpeak"
-                android:layout_width="wrap_content"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etMessage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine"
+                        android:maxLines="4" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnSpeak"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/mic_24px"
+                    android:contentDescription="Speak"
+                    app:fabCustomSize="48dp"
+                    app:layout_constraintBottom_toBottomOf="@id/tilMessage"
+                    app:layout_constraintEnd_toStartOf="@id/btnSend"
+                    app:layout_constraintStart_toEndOf="@id/tilMessage"
+                    app:layout_constraintTop_toTopOf="@id/tilMessage" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnSend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/arrow_upward_24px"
+                    android:contentDescription="Send"
+                    app:fabCustomSize="48dp"
+                    app:layout_constraintBottom_toBottomOf="@id/tilMessage"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/btnSpeak"
+                    app:layout_constraintTop_toTopOf="@id/tilMessage" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Disclaimer — always visible, inside the bottom bar -->
+            <TextView
+                android:id="@+id/disclaimer"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:src="@drawable/mic_24px"
-                app:fabCustomSize="48dp"
-                app:layout_constraintStart_toEndOf="@id/tilMessage"
-                app:layout_constraintBottom_toBottomOf="@+id/tilMessage"
-                app:layout_constraintEnd_toStartOf="@id/btnSend"
-                app:layout_constraintTop_toTopOf="@+id/tilMessage" />
+                android:gravity="center"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="10dp"
+                android:text="Responses are automatically generated by AI. Please verify important information."
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                android:textColor="?attr/colorOnSurfaceVariant" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnSend"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:src="@drawable/arrow_upward_24px"
-                app:fabCustomSize="48dp"
-                app:layout_constraintBottom_toBottomOf="@+id/tilMessage"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/tilMessage"
-                app:layout_constraintStart_toEndOf="@id/btnSpeak"/>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </layout>
