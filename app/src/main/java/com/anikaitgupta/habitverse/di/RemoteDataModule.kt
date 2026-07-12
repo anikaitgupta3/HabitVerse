@@ -29,16 +29,6 @@ object RemoteDataModule {
     }
     @Singleton
     @Provides
-    fun provideFirebaseAuth(): FirebaseAuth{
-        return FirebaseAuth.getInstance()
-    }
-    @Singleton
-    @Provides
-    fun provideAuthRepository(firebaseAuth: FirebaseAuth): AuthRepository{
-        return AuthRepositoryImpl(firebaseAuth)
-    }
-    @Singleton
-    @Provides
     fun provideLogRemoteDataSource(firestore: FirebaseFirestore): LogRemoteDataSource {
         return LogRemoteDataSourceImpl(firestore)
     }

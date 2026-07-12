@@ -31,7 +31,7 @@ android {
         versionCode = 5
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.anikaitgupta.habitverse.HiltTestRunner"
         multiDexEnabled = true
     }
 
@@ -73,6 +73,15 @@ android {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
 
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE-notice.md"
+            pickFirsts += "dispatcher.jar"
+        }
+    }
+
 
 
 }
@@ -81,6 +90,8 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.navigation.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.navigation.ui.ktx)
     implementation(libs.firebase.crashlytics)
     implementation(libs.material)
     implementation(libs.androidx.activity)
@@ -95,6 +106,7 @@ dependencies {
     implementation(libs.navigation.ui.ktx)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
+    testImplementation(libs.junit.junit)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
@@ -111,6 +123,8 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:2.59.1")
     ksp("com.google.dagger:hilt-android-compiler:2.59.1")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.59.1")
+    kspAndroidTest("com.google.dagger:hilt-android-compiler:2.59.1")
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))
     // other dependencies
     // Compose
@@ -135,5 +149,24 @@ dependencies {
     // Source: https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
     debugImplementation("com.squareup.leakcanary:leakcanary-android:3.0-alpha-8")
+    // Kotlin DSL
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    androidTestImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("androidx.room:room-testing:2.8.4")
+    androidTestImplementation("androidx.room:room-testing:2.8.4")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    androidTestImplementation("app.cash.turbine:turbine:1.2.1")
+    testImplementation("app.cash.turbine:turbine:1.2.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+    testImplementation("org.mockito:mockito-core:3.6.0")
+    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.mockk.agent)
+    testImplementation(libs.mockk.android)
+    testImplementation(libs.mockk.agent)
+    // Required for tests inside the src/androidTest folder
+    androidTestImplementation("org.mockito:mockito-android:5.23.0")
+
 
 }
